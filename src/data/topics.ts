@@ -1,0 +1,854 @@
+import { AppLanguage } from './translations';
+
+export interface VocabEntry {
+  en: string;
+  fr: string;
+  de: string;
+  pos?: string;
+  definitionEn: string;
+  definitionFr: string;
+  definitionDe: string;
+}
+
+export interface TopicItem {
+  id: string;
+  category: 'culture' | 'education' | 'economy' | 'technology' | 'arts' | 'humanities';
+  topicEn: string;
+  topicFr: string;
+  topicDe: string;
+  vocab: VocabEntry[];
+  promptEn: string;
+  promptFr: string;
+  promptDe: string;
+}
+
+export const CATEGORIES = [
+  { id: 'all', key: 'allDomains' },
+  { id: 'culture', key: 'culture' },
+  { id: 'education', key: 'education' },
+  { id: 'economy', key: 'economy' },
+  { id: 'technology', key: 'technology' },
+  { id: 'arts', key: 'arts' },
+  { id: 'humanities', key: 'humanities' },
+] as const;
+
+export type CategoryId = (typeof CATEGORIES)[number]['id'];
+
+export const countWords = (str: string): number => {
+  return str.trim().split(/\s+/).filter(Boolean).length;
+};
+
+// Helper to sanitize to max words
+export const sanitizeMaxWords = (str: string, max = 4): string => {
+  const parts = str.trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, max).join(' ');
+};
+
+// 50 Culture topics (c1 - c50)
+const CULTURE_TOPICS: TopicItem[] = [
+  {
+    id: 'c1',
+    category: 'culture',
+    topicEn: 'CULTURAL HERITAGE PRESERVATION',
+    topicFr: 'PRÉSERVATION DU PATRIMOINE',
+    topicDe: 'KULTURERBE SCHUTZ',
+    vocab: [
+      { en: 'Restoration', fr: 'Restauration', de: 'Restaurierung', pos: 'n', definitionEn: 'Returning an artifact to former state', definitionFr: 'Remise en état d’origine', definitionDe: 'Wiederherstellung eines Artefakts' },
+      { en: 'Authenticity', fr: 'Authenticité', de: 'Authentizität', pos: 'n', definitionEn: 'Quality of being genuine', definitionFr: 'Caractère de ce qui est vrai', definitionDe: 'Echtheit und Glaubwürdigkeit' }
+    ],
+    promptEn: 'Should governments prioritize historical monument restoration over modern infrastructure?',
+    promptFr: 'Les gouvernements devraient-ils privilégier la restauration des monuments à l’infrastructure moderne ?',
+    promptDe: 'Sollten Staaten Denkmäler gegenüber moderner Infrastruktur priorisieren?'
+  },
+  {
+    id: 'c2',
+    category: 'culture',
+    topicEn: 'TRADITIONAL CRAFT REVIVAL',
+    topicFr: 'RENAISSANCE ARTISANALE',
+    topicDe: 'HANDWERKS REVIVAL',
+    vocab: [
+      { en: 'Artisan', fr: 'Artisan', de: 'Handwerker', pos: 'n', definitionEn: 'A worker in a skilled craft', definitionFr: 'Professionnel des métiers manuels', definitionDe: 'Fachkraft im traditionellen Gewerbe' },
+      { en: 'Heritage', fr: 'Patrimoine', de: 'Kulturgut', pos: 'n', definitionEn: 'Traditions inherited from the past', definitionFr: 'Biens transmis par les ancêtres', definitionDe: 'Überlieferte Traditionen' }
+    ],
+    promptEn: 'How can handmade crafts remain competitive against modern automated mass production?',
+    promptFr: 'Comment l’artisanat d’art peut-il survivre face à la production industrielle de masse ?',
+    promptDe: 'Wie kann handwerkliche Fertigung gegen industrielle Massenproduktion bestehen?'
+  },
+  {
+    id: 'c3',
+    category: 'culture',
+    topicEn: 'INDIGENOUS KNOWLEDGE SYSTEMS',
+    topicFr: 'SAVOIRS AUTOCHTONES',
+    topicDe: 'INDIGENES WISSEN',
+    vocab: [
+      { en: 'Ancestral', fr: 'Ancestral', de: 'Ahnenbezogen', pos: 'adj', definitionEn: 'Inherited from forebears', definitionFr: 'Transmis par les aïeux', definitionDe: 'Von Vorfahren ererbt' },
+      { en: 'Ecosystem', fr: 'Écosystème', de: 'Ökosystem', pos: 'n', definitionEn: 'Interacting community of organisms', definitionFr: 'Système écologique vivant', definitionDe: 'Gemeinschaft von Organismen' }
+    ],
+    promptEn: 'In what ways does indigenous botany benefit modern pharmacology and environmental stewardship?',
+    promptFr: 'En quoi les savoirs botaniques ancestraux enrichissent-ils la pharmacologie contemporaine ?',
+    promptDe: 'Wie bereichert traditionelle Naturheilkunde die moderne Pharmakologie?'
+  },
+  {
+    id: 'c4',
+    category: 'culture',
+    topicEn: 'CULINARY DIPLOMACY TRENDS',
+    topicFr: 'DIPLOMATIE GASTRONOMIQUE',
+    topicDe: 'KULINARISCHE DIPLOMATIE',
+    vocab: [
+      { en: 'Gastronomy', fr: 'Gastronomie', de: 'Gastronomie', pos: 'n', definitionEn: 'Art and practice of fine cooking', definitionFr: 'Art de la bonne chère', definitionDe: 'Feinschmeckerei und Kochkunst' },
+      { en: 'Soft power', fr: 'Puissance douce', de: 'Soft Power', pos: 'n', definitionEn: 'Cultural influence abroad', definitionFr: 'Influence culturelle internationale', definitionDe: 'Kulturelle Einflussnahme' }
+    ],
+    promptEn: 'Can national cuisine serve as an effective instrument in resolving cross-border tensions?',
+    promptFr: 'La cuisine nationale peut-elle servir de passerelle pour apaiser les tensions politiques ?',
+    promptDe: 'Kann nationale Esskultur als Brücke bei internationalen Konflikten dienen?'
+  },
+  {
+    id: 'c5',
+    category: 'culture',
+    topicEn: 'LANGUAGE ENDANGERMENT CRISIS',
+    topicFr: 'DISPARITION DES LANGUES',
+    topicDe: 'SPRACHENSTERBEN KRISE',
+    vocab: [
+      { en: 'Extinction', fr: 'Extinction', de: 'Aussterben', pos: 'n', definitionEn: 'Complete vanishing of a phenomenon', definitionFr: 'Disparition totale d’une langue', definitionDe: 'Vollständiges Verschwinden' },
+      { en: 'Dialect', fr: 'Dialecte', de: 'Dialekt', pos: 'n', definitionEn: 'Regional speech variety', definitionFr: 'Variété régionale d’une langue', definitionDe: 'Regionale Sprachform' }
+    ],
+    promptEn: 'What cultural worldviews are lost permanently when a minority dialect ceases to be spoken?',
+    promptFr: 'Que perd l’humanité lorsqu’un dialecte minoritaire cesse définitivement d’être parlé ?',
+    promptDe: 'Welche Sichtweisen gehen unwiederbringlich verloren, wenn Sprachen aussterben?'
+  },
+  {
+    id: 'c6',
+    category: 'culture',
+    topicEn: 'CROSS CULTURAL DIALOGUE',
+    topicFr: 'DIALOGUE INTERCULTUREL',
+    topicDe: 'INTERKULTURELLER DIALOG',
+    vocab: [
+      { en: 'Empathy', fr: 'Empathie', de: 'Empathie', pos: 'n', definitionEn: 'Understanding another’s perspective', definitionFr: 'Capacité à ressentir autrui', definitionDe: 'Einfühlungsvermögen' },
+      { en: 'Pluralism', fr: 'Pluralisme', de: 'Pluralismus', pos: 'n', definitionEn: 'Coexistence of diverse groups', definitionFr: 'Coexistence de cultures variées', definitionDe: 'Koexistenz verschiedener Gruppen' }
+    ],
+    promptEn: 'How can educational institutions instill deeper appreciation for non-Western worldviews?',
+    promptFr: 'Comment favoriser une meilleure appréciation des cultures extra-occidentales ?',
+    promptDe: 'Wie kann Bildung echtes Verständnis für außereuropäische Kulturen fördern?'
+  },
+  {
+    id: 'c7',
+    category: 'culture',
+    topicEn: 'FOLKLORE STORYTELLING REVIVAL',
+    topicFr: 'CONTES TRADITIONNELS',
+    topicDe: 'VOLKSSAGEN WIEDERBELEBUNG',
+    vocab: [
+      { en: 'Mythology', fr: 'Mythologie', de: 'Mythologie', pos: 'n', definitionEn: 'Body of traditional legends', definitionFr: 'Ensemble de récits fabuleux', definitionDe: 'Gesamtheit mythologischer Mythen' },
+      { en: 'Narrative', fr: 'Récit', de: 'Erzählung', pos: 'n', definitionEn: 'Structured verbal story', definitionFr: 'Histoire structurée', definitionDe: 'Strukturierte Erzählform' }
+    ],
+    promptEn: 'Why do oral folktales experience renewed popularity in modern cinematic franchises?',
+    promptFr: 'Pourquoi les mythes fondateurs rencontrent-ils un tel succès au cinéma contemporain ?',
+    promptDe: 'Warum erfreuen sich traditionelle Mythen in modernen Medien erneuter Beliebtheit?'
+  },
+  {
+    id: 'c8',
+    category: 'culture',
+    topicEn: 'FESTIVAL TOURISM IMPACT',
+    topicFr: 'TOURISME DE FESTIVAL',
+    topicDe: 'FESTIVALTOURISMUS',
+    vocab: [
+      { en: 'Congestion', fr: 'Engorgement', de: 'Überlastung', pos: 'n', definitionEn: 'Excessive crowding', definitionFr: 'Surfréquentation des lieux', definitionDe: 'Verkehrs- oder Besucherandrang' },
+      { en: 'Commercialize', fr: 'Commercialiser', de: 'Kommerzialisieren', pos: 'v', definitionEn: 'Turn tradition into profit', definitionFr: 'Exploiter à des fins lucratives', definitionDe: 'Wirtschaftlich vermarkten' }
+    ],
+    promptEn: 'Does festival commercialization jeopardize the authentic rituals of local communities?',
+    promptFr: 'La commercialisation des fêtes traditionnelles menace-t-elle leur authenticité spirituelle ?',
+    promptDe: 'Gefährdet die Vermarktung von Festen die Bräuche lokaler Gemeinschaften?'
+  },
+  {
+    id: 'c9',
+    category: 'culture',
+    topicEn: 'ANCIENT ARCHITECTURE CONSERVATION',
+    topicFr: 'ARCHITECTURE ANCIENNE',
+    topicDe: 'HISTORISCHE BAUDENKMÄLER',
+    vocab: [
+      { en: 'Masonry', fr: 'Maçonnerie', de: 'Mauerwerk', pos: 'n', definitionEn: 'Stonework construction', definitionFr: 'Ouvrage en pierre ou brique', definitionDe: 'Handwerkliche Steinbauweise' },
+      { en: 'Antiquity', fr: 'Antiquité', de: 'Antike', pos: 'n', definitionEn: 'Ancient historic eras', definitionFr: 'Époques anciennes', definitionDe: 'Epoche des Altertums' }
+    ],
+    promptEn: 'How can historic city centers adapt to clean transport without destroying ancient cobbles?',
+    promptFr: 'Comment adapter les centres anciens aux mobilités douces sans altérer leur bâti ?',
+    promptDe: 'Wie können historische Altstädte modernisiert werden, ohne Bausubstanz zu beschädigen?'
+  },
+  {
+    id: 'c10',
+    category: 'culture',
+    topicEn: 'DIASPORA CULTURAL IDENTITY',
+    topicFr: 'IDENTITÉ DE DIASPORA',
+    topicDe: 'DIASPORA IDENTITÄT',
+    vocab: [
+      { en: 'Assimilation', fr: 'Assimilation', de: 'Assimilation', pos: 'n', definitionEn: 'Absorbing into dominant culture', definitionFr: 'Intégration totale au groupe', definitionDe: 'Vollständige Anpassung' },
+      { en: 'Hybridity', fr: 'Hybridité', de: 'Hybridität', pos: 'n', definitionEn: 'Blending cultural expressions', definitionFr: 'Mélange de formes distinctes', definitionDe: 'Vermischung kultureller Formen' }
+    ],
+    promptEn: 'How do migrant families retain their native customs across second and third generations?',
+    promptFr: 'Comment les familles issues de l’immigration perpétuent-elles leurs racines familiales ?',
+    promptDe: 'Wie bewahren Familien mit Migrationsgeschichte ihre Traditionen über Generationen?'
+  },
+  { id: 'c11', category: 'culture', topicEn: 'ETHNIC ATTIRE MODERNIZATION', topicFr: 'MODERNISATION DU COSTUME', topicDe: 'TRACHTEN MODERNISIERUNG', vocab: [], promptEn: 'Does adapting national costumes into daily wear preserve or dilute tradition?', promptFr: 'Adapter le costume ethnique préserve-t-il la tradition ?', promptDe: 'Bewahrt moderne Tracht die Tradition?' },
+  { id: 'c12', category: 'culture', topicEn: 'MUSEUM REPATRIATION DEBATE', topicFr: 'RESTITUTION DES BIENS', topicDe: 'MUSEALE RÜCKGABE', vocab: [], promptEn: 'Should colonial-era museum treasures be returned to their countries of origin?', promptFr: 'Les trésors coloniaux doivent-ils être restitués ?', promptDe: 'Sollten koloniale Kulturgüter zurückgegeben werden?' },
+  { id: 'c13', category: 'culture', topicEn: 'SECULAR HOLIDAY SHIFTS', topicFr: 'FÊTES LAÏQUES', topicDe: 'SÄKULARE FEIERSTAGE', vocab: [], promptEn: 'Are secular rituals replacing centuries-old religious celebrations?', promptFr: 'Les célébrations laïques remplacent-elles les fêtes religieuses ?', promptDe: 'Ersetzen weltliche Bräuche religiöse Feiertage?' },
+  { id: 'c14', category: 'culture', topicEn: 'GLOBAL POP ASSIMILATION', topicFr: 'ASSIMILATION POP', topicDe: 'POP-KULTUR ASSIMILATION', vocab: [], promptEn: 'Is worldwide streaming homogenizing local music styles?', promptFr: 'Le streaming mondial uniformise-t-il la création musicale ?', promptDe: 'Führt weltweites Streaming zur Gleichförmigkeit in der Musik?' },
+  { id: 'c15', category: 'culture', topicEn: 'ORAL HISTORY ARCHIVING', topicFr: 'ARCHIVES ORALES', topicDe: 'MÜNDLICHE ÜBERLIEFERUNG', vocab: [], promptEn: 'Why are audio interviews with elders crucial for historical archives?', promptFr: 'Pourquoi enregistrer les récits des anciens est-il indispensable ?', promptDe: 'Warum sind Zeitzeugen-Interviews unverzichtbar?' },
+  { id: 'c16', category: 'culture', topicEn: 'URBAN SUB-CULTURE HUBS', topicFr: 'SOUS-CULTURES URBAINES', topicDe: 'URBANE SUBCULTUREN', vocab: [], promptEn: 'How do indie neighborhoods nourish alternative artistic movements?', promptFr: 'Comment les quartiers bohèmes nourrissent-ils la contre-culture ?', promptDe: 'Wie beflügeln Szeneviertel kreative Gegenbewegungen?' },
+  { id: 'c17', category: 'culture', topicEn: 'SPIRITUAL RITUAL PRACTICES', topicFr: 'RITUELS SPIRITUELS', topicDe: 'SPIRITUELLE RITUALE', vocab: [], promptEn: 'Why do young adults increasingly seek mindfulness and ancient meditation?', promptFr: 'Pourquoi un tel engouement pour la méditation ancestrale ?', promptDe: 'Warum wenden sich junge Menschen alten Meditationsformen zu?' },
+  { id: 'c18', category: 'culture', topicEn: 'CALLIGRAPHY AS HERITAGE', topicFr: 'CALLIGRAPHIE ANCESTRALE', topicDe: 'KALLIGRAFIE TRADITION', vocab: [], promptEn: 'Can brush calligraphy survive in a society dominated by keyboards?', promptFr: 'L’art du pinceau a-t-il un avenir à l’ère des claviers ?', promptDe: 'Hat Pinselschrift im digitalen Zeitalter Bestand?' },
+  { id: 'c19', category: 'culture', topicEn: 'LOCAL DIALECT SURVIVAL', topicFr: 'SURVIE DES PATOIS', topicDe: 'DIALEKT-ERHALTUNG', vocab: [], promptEn: 'Should schools offer regional dialect courses alongside national curricula?', promptFr: 'Faut-il enseigner les dialectes régionaux à l’école ?', promptDe: 'Sollten Schulen regionale Mundarten unterrichten?' },
+  { id: 'c20', category: 'culture', topicEn: 'FERMENTED FOOD HERITAGE', topicFr: 'ALIMENTS FERMENTÉS', topicDe: 'FERMENTATIONS-KULTUR', vocab: [], promptEn: 'How does ancestral fermentation link microbiological science and culture?', promptFr: 'Quel lien entre fermentation ancestrale et identité culinaire ?', promptDe: 'Wie verbindet Fermentation Mikrobiologie mit Kochkultur?' },
+  { id: 'c21', category: 'culture', topicEn: 'NOMADIC WAY LIVING', topicFr: 'VIE NOMADE', topicDe: 'NOMADISCHE LEBENSWEISE', vocab: [], promptEn: 'What lessons in ecological balance do pastoral nomads teach us?', promptFr: 'Quelles leçons écologiques tirer des modes de vie nomades ?', promptDe: 'Was können wir von nomadischen Völkern über Ökologie lernen?' },
+  { id: 'c22', category: 'culture', topicEn: 'PILGRIMAGE TRAIL HERITAGE', topicFr: 'SENTIERS DE PÈLERINAGE', topicDe: 'PILGERWEGE TRADITION', vocab: [], promptEn: 'Why are hiking trails like Santiago de Compostela booming worldwide?', promptFr: 'Pourquoi les pèlerinages historiques attirent-ils tant de laïcs ?', promptDe: 'Warum boomen historische Pilgerwege weltweit?' },
+  { id: 'c23', category: 'culture', topicEn: 'INDIGENOUS LAND RIGHTS', topicFr: 'DROITS DES AUTOCHTONES', topicDe: 'INDIGENE LANDRECHTE', vocab: [], promptEn: 'How do land restitution laws protect sacred rainforests?', promptFr: 'Comment les droits fonciers autochtones protègent-ils les forêts ?', promptDe: 'Wie schützen indigene Landrechte unberührte Urwälder?' },
+  { id: 'c24', category: 'culture', topicEn: 'COMMUNAL FEAST RITUALS', topicFr: 'BANQUETS POPULAIRES', topicDe: 'GEMEINSCHAFTSFESTE', vocab: [], promptEn: 'Does dining at long community tables rebuild eroded neighborhood trust?', promptFr: 'Les grands repas de quartier réparent-ils le lien social ?', promptDe: 'Stärken gemeinsame Mahlzeiten den Zusammenhalt im Viertel?' },
+  { id: 'c25', category: 'culture', topicEn: 'SACRED GROVE CONSERVATION', topicFr: 'BOIS SACRÉS', topicDe: 'HEILIGE HAIN-SCHUTZ', vocab: [], promptEn: 'Can spiritual taboos protect biodiversity better than written civil laws?', promptFr: 'Les interdits spirituels protègent-ils mieux les forêts que les lois ?', promptDe: 'Können spirituelle Tabus Ökosysteme wirksam bewahren?' },
+  { id: 'c26', category: 'culture', topicEn: 'CERAMIC TEA CEREMONIES', topicFr: 'CÉRÉMONIE DU THÉ', topicDe: 'TEEZEREMONIE KULTUR', vocab: [], promptEn: 'What philosophical values lie inside traditional tea ceremonies?', promptFr: 'Quelles valeurs philosophiques porte la cérémonie du thé ?', promptDe: 'Welche Philosophie birgt die traditionelle Teezeremonie?' },
+  { id: 'c27', category: 'culture', topicEn: 'WEDDING TRADITION EVOLUTION', topicFr: 'ÉVOLUTION DU MARIAGE', topicDe: 'HOCHZEITS-BRAUCHTUM', vocab: [], promptEn: 'How are modern nuptials balancing heritage customs with budget realism?', promptFr: 'Comment concilier coutumes matrimoniales et sobriété financière ?', promptDe: 'Wie vereinbaren Paare alte Hochzeitsbräuche mit Vernunft?' },
+  { id: 'c28', category: 'culture', topicEn: 'TRADITIONAL HEALING METHODS', topicFr: 'MÉDECINES TRADITIONNELLES', topicDe: 'TRADITIONELLE HEILKUNDE', vocab: [], promptEn: 'Should public health systems integrate verified herbal practitioners?', promptFr: 'La médecine conventionnelle doit-elle intégrer les herboristes ?', promptDe: 'Sollte das Gesundheitssystem traditionelle Heilkunde anerkennen?' },
+  { id: 'c29', category: 'culture', topicEn: 'CULTURAL TABOOS EVOLUTION', topicFr: 'ÉVOLUTION DES TABOUS', topicDe: 'TABU-WANDEL', vocab: [], promptEn: 'How rapidly do moral prohibitions change across different decades?', promptFr: 'À quel rythme les interdits moraux se transforment-ils ?', promptDe: 'Wie schnell verändern sich gesellschaftliche Tabus?' },
+  { id: 'c30', category: 'culture', topicEn: 'FUNERAL CUSTOM ADAPTATIONS', topicFr: 'RITES FUNÉRAIRES', topicDe: 'BESTATTUNGS-KULTUR', vocab: [], promptEn: 'Why are eco-friendly forest burials gaining favor over stone vaults?', promptFr: 'Pourquoi les sépultures naturelles gagnent-elles en popularité ?', promptDe: 'Warum gewinnen Baumbestattungen an Beliebtheit?' },
+  { id: 'c31', category: 'culture', topicEn: 'TEXTILE DYE HERITAGE', topicFr: 'TEINTURES NATURELLES', topicDe: 'PFLANZENFARBEN KULTUR', vocab: [], promptEn: 'Can botanical indigo dyes replace polluting petroleum synthetic pigments?', promptFr: 'Les pigments végétaux peuvent-ils remplacer les colorants toxiques ?', promptDe: 'Können Pflanzenfarben synthetische Giftstoffe ablösen?' },
+  { id: 'c32', category: 'culture', topicEn: 'CARNIVAL COSTUME SYMBOLISM', topicFr: 'MASQUES DE CARNAVAL', topicDe: 'KARNEVALSBRAUCHTUM', vocab: [], promptEn: 'What social tensions do satire and masks release during carnival?', promptFr: 'Quelles tensions sociales les masques permettent-ils d’exorciser ?', promptDe: 'Welche Ventilfunktion besitzen Masken im Karneval?' },
+  { id: 'c33', category: 'culture', topicEn: 'WOODCARVING HERITAGE GUILDS', topicFr: 'GUILDES DE SCULPTEURS', topicDe: 'HOLZSCHNITZ-ZÜNFTE', vocab: [], promptEn: 'How can apprentice guild structures be revived for modern craftmakers?', promptFr: 'Comment réinventer le compagnonnage pour la jeunesse ?', promptDe: 'Wie kann das Zunftwesen für die Jugend erneuert werden?' },
+  { id: 'c34', category: 'culture', topicEn: 'LULLABY MELODIC PRESERVATION', topicFr: 'BERCEUSES TRADITIONNELLES', topicDe: 'WIEGENLIEDER ERBE', vocab: [], promptEn: 'Do regional lullabies encode ancient maternal rhythms and dialects?', promptFr: 'Les berceuses d’antan transmettent-elles des mémoires archaïques ?', promptDe: 'Welche uralten Sprachrhythmen transportieren Wiegenlieder?' },
+  { id: 'c35', category: 'culture', topicEn: 'FARMING CALENDAR RITUALS', topicFr: 'CALENDRIER RURAL', topicDe: 'BAUERNKALENDER BRÄUCHE', vocab: [], promptEn: 'Did solstice planting festivals predict microclimates accurately?', promptFr: 'Les dictons agraires conservent-ils une valeur écologique ?', promptDe: 'Haben alte Bauernregeln noch ökologische Relevanz?' },
+  { id: 'c36', category: 'culture', topicEn: 'TOWN SQUARE GATHERINGS', topicFr: 'PLACES DU VILLAGE', topicDe: 'DORFPLATZ KULTUR', vocab: [], promptEn: 'Why is the Mediterranean piazza still a masterclass in urban social life?', promptFr: 'Pourquoi la place de village demeure-t-elle un modèle de convivialité ?', promptDe: 'Warum ist der Dorfplatz bis heute das Herzstück des Zusammenlebens?' },
+  { id: 'c37', category: 'culture', topicEn: 'BELL FOUNDRY TRADITION', topicFr: 'FONTE DES CLOCHES', topicDe: 'GLOCKENGIESSER KUNST', vocab: [], promptEn: 'How has bronze casting acoustics remained unchanged across millennia?', promptFr: 'Comment la fonte du bronze a-t-elle préservé ses secrets ?', promptDe: 'Wie hat der Glockenguss seine Klangtradition bewahrt?' },
+  { id: 'c38', category: 'culture', topicEn: 'SHADOW PUPPET THEATRE', topicFr: 'THÉÂTRE D’OMBRES', topicDe: 'SCHATTENSPIEL KUNST', vocab: [], promptEn: 'What makes silhouette storytelling uniquely captivating in a CGI world?', promptFr: 'En quoi les marionnettes d’ombres défient-elles les écrans numériques ?', promptDe: 'Was macht das Schattentheater trotz digitaler Effekte magisch?' },
+  { id: 'c39', category: 'culture', topicEn: 'PROVERB LINGUISTIC WISDOM', topicFr: 'SAGESSE DES PROVERBES', topicDe: 'SPRICHWORT WEISHEIT', vocab: [], promptEn: 'Do concise historical idioms convey universal moral psychology?', promptFr: 'Les dictons populaires reflètent-ils une morale universelle ?', promptDe: 'Verbinden alte Sprichwörter universelle Menschenkenntnis?' },
+  { id: 'c40', category: 'culture', topicEn: 'COMMUNITY STORYTELLING CIRCLES', topicFr: 'VEILLÉES DE CONTES', topicDe: 'ERZÄHLKREISE TRADITION', vocab: [], promptEn: 'Can sitting around campfires without screens restore attention spans?', promptFr: 'Les veillées sans smartphone réparent-elles l’écoute attentive ?', promptDe: 'Können bildschirmfreie Erzählabende die Konzentration stärken?' },
+  { id: 'c41', category: 'culture', topicEn: 'SPICE ROUTE HISTORIES', topicFr: 'ROUTE DES ÉPICES', topicDe: 'GEWÜRZSTRASSE HISTORIE', vocab: [], promptEn: 'How did pepper and cinnamon trade shape maritime laws and empires?', promptFr: 'Comment le négoce des épices a-t-il forgé le droit maritime mondial ?', promptDe: 'Wie prägte der Gewürzhandel das Völkerrecht zur See?' },
+  { id: 'c42', category: 'culture', topicEn: 'ROOFTOP GARDENING TRADITION', topicFr: 'JARDINS SUR TOITS', topicDe: 'DACHGARTEN TRADITION', vocab: [], promptEn: 'Can centuries-old terraced agriculture inspire modern vertical city farms?', promptFr: 'L’agriculture en terrasse inspire-t-elle les fermes verticales modernes ?', promptDe: 'Können alte Terrassengärten moderne Stadtfarmen inspirieren?' },
+  { id: 'c43', category: 'culture', topicEn: 'MARITIME FISHING FOLKLORE', topicFr: 'LÉGENDES DE PÊCHEURS', topicDe: 'SEEFAHRER MYTHEN', vocab: [], promptEn: 'How did superstitious seafaring tales regulate sustainable fish catches?', promptFr: 'Les croyances marines ont-elles protégé les ressources halieutiques ?', promptDe: 'Dienten maritime Mythen früher dem Schutz der Fischbestände?' },
+  { id: 'c44', category: 'culture', topicEn: 'MASONRY GUILD SECRETS', topicFr: 'SECRETS DES BÂTISSEURS', topicDe: 'DOMBAUER GEHEIMNISSE', vocab: [], promptEn: 'What geometry secrets allowed medieval cathedrals to stand without steel?', promptFr: 'Quels calculs géométriques soutiennent les voûtes de pierre ?', promptDe: 'Welche Geometrie hält Kathedralen ohne Stahl zusammen?' },
+  { id: 'c45', category: 'culture', topicEn: 'TRADITIONAL ANIMAL HUSBANDRY', topicFr: 'ÉLEVAGE EXTENSIF', topicDe: 'WEIDEWIRTSCHAFT TRADITION', vocab: [], promptEn: 'Does seasonal transhumance pasture grazing prevent catastrophic wildfires?', promptFr: 'Le pastoralisme traditionnel prévient-il les feux de forêt ?', promptDe: 'Verhindert traditionelle Wanderschäferei verheerende Waldbrände?' },
+  { id: 'c46', category: 'culture', topicEn: 'CRAFT BEER MONASTICISM', topicFr: 'BIÈRES TRAPPISTES', topicDe: 'KLOSTERBRAU KULTUR', vocab: [], promptEn: 'Why do abbey breweries still produce the world’s most revered ales?', promptFr: 'Pourquoi les bières monastiques restent-elles une référence mondiale ?', promptDe: 'Warum genießen Klosterbrauereien Weltruf bei Bierkennern?' },
+  { id: 'c47', category: 'culture', topicEn: 'FARMERS MARKET CULTURE', topicFr: 'MARCHÉS DE PRODUCTEURS', topicDe: 'BAUERNMARKT KULTUR', vocab: [], promptEn: 'How do open-air weekend markets counter sterile hypermarket logistics?', promptFr: 'Les marchés de plein air contrarient-ils la grande distribution ?', promptDe: 'Wie beleben Wochenmärkte den direkten Austausch mit Erzeugern?' },
+  { id: 'c48', category: 'culture', topicEn: 'VINTAGE WINEMAKING TERROIR', topicFr: 'TERROIR VITICOLE', topicDe: 'WEINBAU TERROIR', vocab: [], promptEn: 'How does soil composition dictate subtle notes in heritage vintages?', promptFr: 'Comment le terroir façonne-t-il la typicité des grands crus ?', promptDe: 'Wie prägt die Bodenbeschaffenheit den Charakter edler Weine?' },
+  { id: 'c49', category: 'culture', topicEn: 'SILK WEAVING TECHNIQUES', topicFr: 'SOIERIE ANCESTRALE', topicDe: 'SEIDENWEBEREI KUNST', vocab: [], promptEn: 'Can Jacquard silk looms teach engineers early punch-card computing history?', promptFr: 'En quoi les métiers Jacquard préfigurent-ils l’informatique ?', promptDe: 'Inwiefern war der Jacquard-Webstuhl der Vorläufer des Computers?' },
+  { id: 'c50', category: 'culture', topicEn: 'FOLK MUSIC ACCORDION', topicFr: 'ACCORDÉON POPULAIRE', topicDe: 'AKKORDEON VOLKSMUSIK', vocab: [], promptEn: 'How did the portable bellows accordion travel across all world continents?', promptFr: 'Comment l’accordéon est-il devenu l’instrument universel du peuple ?', promptDe: 'Wie eroberte das Akkordeon weltweit die Volksmusik?' },
+];
+
+// 50 Education topics (e1 - e50)
+const EDUCATION_TOPICS: TopicItem[] = [
+  {
+    id: 'e1',
+    category: 'education',
+    topicEn: 'CRITICAL THINKING CURRICULA',
+    topicFr: 'PENSÉE CRITIQUE ÉCOLE',
+    topicDe: 'KRITISCHES DENKEN LEHRPLAN',
+    vocab: [
+      { en: 'Deduction', fr: 'Déduction', de: 'Deduktion', pos: 'n', definitionEn: 'Logical step from premise to fact', definitionFr: 'Raisonnement du général au particulier', definitionDe: 'Logisches Folgern aus Prämissen' },
+      { en: 'Scrutiny', fr: 'Examen attentif', de: 'Genaue Prüfung', pos: 'n', definitionEn: 'Critical close observation', definitionFr: 'Observation minutieuse et critique', definitionDe: 'Eingehende kritische Analyse' }
+    ],
+    promptEn: 'Why do modern testing frameworks still favor rote memorization over argumentative debate?',
+    promptFr: 'Pourquoi les examens privilégient-ils encore le par cœur sur l’argumentation ?',
+    promptDe: 'Warum bevorzugen Prüfungen oft Auswendiglernen statt Argumentation?'
+  },
+  {
+    id: 'e2',
+    category: 'education',
+    topicEn: 'EQUAL EDUCATIONAL ACCESS',
+    topicFr: 'ÉGALITÉ DES CHANCES',
+    topicDe: 'BILDUNGSCHANCEN GLEICHHEIT',
+    vocab: [
+      { en: 'Disparity', fr: 'Disparité', de: 'Ungleichheit', pos: 'n', definitionEn: 'Noticeable difference in conditions', definitionFr: 'Inégalité notable de traitement', definitionDe: 'Deutlicher Unterschied' },
+      { en: 'Subsidize', fr: 'Subventionner', de: 'Bezuschussen', pos: 'v', definitionEn: 'Support via public financing', definitionFr: 'Soutenir financièrement sur fonds publics', definitionDe: 'Staatlich finanziell fördern' }
+    ],
+    promptEn: 'What public policies best close the achievement divide between rural and metropolitan schools?',
+    promptFr: 'Quelles réformes réduisent l’écart scolaire entre régions rurales et métropoles ?',
+    promptDe: 'Welche Maßnahmen verringern das Bildungsgefälle zwischen Stadt und Land?'
+  },
+  {
+    id: 'e3',
+    category: 'education',
+    topicEn: 'LIFELONG LEARNING MINDSET',
+    topicFr: 'FORMATION TOUT AU LONG',
+    topicDe: 'LEBENSLANGES LERNEN',
+    vocab: [
+      { en: 'Reskilling', fr: 'Reconversion', de: 'Umschulung', pos: 'n', definitionEn: 'Acquiring brand-new vocational competencies', definitionFr: 'Apprentissage de nouveaux métiers', definitionDe: 'Erlernen neuer beruflicher Fertigkeiten' },
+      { en: 'Obsolescence', fr: 'Obsolescence', de: 'Veralterung', pos: 'n', definitionEn: 'State of being outdated', definitionFr: 'Fait d’être dépassé par le progrès', definitionDe: 'Zustand der Veralterung' }
+    ],
+    promptEn: 'How will rapid industrial automation reshape the traditional four-year bachelor diploma?',
+    promptFr: 'L’automatisation va-t-elle rendre obsolète le diplôme universitaire en 4 ans ?',
+    promptDe: 'Wird der klassische Hochschulabschluss durch modulare Weiterbildung ersetzt?'
+  },
+  {
+    id: 'e4',
+    category: 'education',
+    topicEn: 'STANDARDIZED TESTING DEBATE',
+    topicFr: 'TESTS STANDARDISÉS',
+    topicDe: 'STANDARDISIERTE TESTS DEBATTE',
+    vocab: [
+      { en: 'Benchmark', fr: 'Référence', de: 'Maßstab', pos: 'n', definitionEn: 'Point used for formal evaluation', definitionFr: 'Critère étalon d’évaluation', definitionDe: 'Vergleichsmaßstab für Leistung' },
+      { en: 'Holistic', fr: 'Holistique', de: 'Ganzheitlich', pos: 'adj', definitionEn: 'Addressing the entire individual', definitionFr: 'Qui prend en compte l’être entier', definitionDe: 'Die Gesamtheit umfassend' }
+    ],
+    promptEn: 'Do timed standardized exams measure genuine problem-solving or merely test-taking privilege?',
+    promptFr: 'Les épreuves standardisées mesurent-elles le talent ou le bachotage ?',
+    promptDe: 'Messen standardisierte Prüfungen Intelligenz oder Vorbereitungsprivilegien?'
+  },
+  {
+    id: 'e5',
+    category: 'education',
+    topicEn: 'GAMIFIED CLASSROOM LEARNING',
+    topicFr: 'LUDIFICATION DES COURS',
+    topicDe: 'SPIELERISCHES LERNEN',
+    vocab: [
+      { en: 'Engagement', fr: 'Implication', de: 'Beteiligung', pos: 'n', definitionEn: 'Focused active participation', definitionFr: 'Attention soutenue et active', definitionDe: 'Aktive Teilnahme und Interesse' },
+      { en: 'Intrinsic', fr: 'Intrinsèque', de: 'Intrinsisch', pos: 'adj', definitionEn: 'Inherent and natural from within', definitionFr: 'Propre à l’individu lui-même', definitionDe: 'Von innen heraus motiviert' }
+    ],
+    promptEn: 'Can point systems and video game badges crowd out genuine curiosity for deep reading?',
+    promptFr: 'Les récompenses virtuelles nuisent-elles à la concentration sur les textes longs ?',
+    promptDe: 'Verdrängen Belohnungssysteme echtes Interesse an anspruchsvollen Texten?'
+  },
+  { id: 'e6', category: 'education', topicEn: 'BILINGUAL IMMERSION CLASSROOMS', topicFr: 'IMMERSION BILINGUE', topicDe: 'BILINGUALER UNTERRICHT', vocab: [], promptEn: 'Should schools teach academic subjects in foreign languages from primary school?', promptFr: 'Faut-il enseigner les sciences en langue étrangère dès le primaire ?', promptDe: 'Sollten Fachinhalte ab der Grundschule zweisprachig unterrichtet werden?' },
+  { id: 'e7', category: 'education', topicEn: 'VOCATIONAL APPRENTICESHIP PRESTIGE', topicFr: 'PRESTIGE DE L’APPRENTISSAGE', topicDe: 'DUALE AUSBILDUNG PRESTIGE', vocab: [], promptEn: 'How can governments elevate the societal status of manual skilled trades?', promptFr: 'Comment revaloriser l’image des métiers manuels qualifiés ?', promptDe: 'Wie lässt sich das Ansehen von Handwerksberufen steigern?' },
+  { id: 'e8', category: 'education', topicEn: 'FINANCIAL LITERACY IN SCHOOLS', topicFr: 'ÉDUCATION FINANCIÈRE', topicDe: 'FINANZBILDUNG AN SCHULEN', vocab: [], promptEn: 'Should compound interest and tax fundamentals be compulsory high school courses?', promptFr: 'L’initiation aux impôts et aux placements doit-elle être obligatoire ?', promptDe: 'Sollte Finanzmathematik Pflichtfach an weiterführenden Schulen sein?' },
+  { id: 'e9', category: 'education', topicEn: 'TEACHER RETENTION STRATEGIES', topicFr: 'RETENIR LES ENSEIGNANTS', topicDe: 'LEHRERMANGEL BEKÄMPFUNG', vocab: [], promptEn: 'What workplace conditions best curb burnout among secondary school teachers?', promptFr: 'Quels leviers permettent d’enrayer la démission des professeurs ?', promptDe: 'Welche Maßnahmen stoppen den Ausstieg qualifizierter Lehrkräfte?' },
+  { id: 'e10', category: 'education', topicEn: 'EARLY CHILDHOOD STEM', topicFr: 'INITIATION SCIENTIFIQUE PRÉCOCE', topicDe: 'FRÜHE MINT BILDUNG', vocab: [], promptEn: 'Can hands-on physics toys in kindergarten remove later intimidation by science?', promptFr: 'L’éveil scientifique précoce lève-t-il les blocages en mathématiques ?', promptDe: 'Können Experimente in der Kita Schwellenängste vor Naturwissenschaften abbauen?' },
+  { id: 'e11', category: 'education', topicEn: 'REMOTE DEGREE ACCREDITATION', topicFr: 'DIPLÔMES EN LIGNE', topicDe: 'ONLINE-STUDIUM ANERKENNUNG', vocab: [], promptEn: 'Do employers view online university degrees as equivalent to on-campus degrees?', promptFr: 'Les recruteurs accordent-ils la même valeur aux diplômes à distance ?', promptDe: 'Erkennen Arbeitgeber Online-Abschlüsse gleichwertig an?' },
+  { id: 'e12', category: 'education', topicEn: 'PEER TO PEER TUTORING', topicFr: 'TUTORAT ENTRE PAIRS', topicDe: 'LERNEN DURCH LEHREN', vocab: [], promptEn: 'Why do students often understand tough topics faster when explained by classmates?', promptFr: 'Pourquoi assimile-t-on mieux un cours expliqué par un camarade ?', promptDe: 'Warum verstehen Schüler schwierige Stoffe oft besser von Mitschülern?' },
+  { id: 'e13', category: 'education', topicEn: 'HOMEWORK ABOLITION ARGUMENTS', topicFr: 'SUPPRESSION DES DEVOIRS', topicDe: 'HAUSAUFGABEN ABSCHAFFUNG', vocab: [], promptEn: 'Does assigning nightly homework increase knowledge or deepen home inequality?', promptFr: 'Les devoirs à la maison creusent-ils les inégalités sociales ?', promptDe: 'Verstärken Hausaufgaben Bildungsungleichheiten im Elternhaus?' },
+  { id: 'e14', category: 'education', topicEn: 'OUTDOOR FOREST SCHOOLS', topicFr: 'ÉCOLES DE LA FORÊT', topicDe: 'WALDSCHULEN KONZEPT', vocab: [], promptEn: 'How does daily outdoor play in nature improve child resilience and focus?', promptFr: 'En quoi les cours dispensés en forêt favorisent-ils l’attention des enfants ?', promptDe: 'Wie stärkt regelmäßiger Unterricht im Freien die kindliche Resilienz?' },
+  { id: 'e15', category: 'education', topicEn: 'MONTESSORI METHOD VALIDITY', topicFr: 'PÉDAGOGIE MONTESSORI', topicDe: 'MONTESSORI PÄDAGOGIK', vocab: [], promptEn: 'Do self-directed learning classrooms foster more entrepreneurial adults?', promptFr: 'L’autonomie dès la maternelle forme-t-elle des esprits plus innovants ?', promptDe: 'Fördert selbstbestimmtes Lernen unternehmerisches Handeln im Erwachsenenalter?' },
+  { id: 'e16', category: 'education', topicEn: 'UNIVERSITY TUITION FEES', topicFr: 'FRAIS DE SCOLARITÉ', topicDe: 'STUDIENGEBÜHREN DEBATTE', vocab: [], promptEn: 'Should higher education be entirely funded through general progressive taxation?', promptFr: 'L’accès aux études supérieures devrait-il être totalement gratuit ?', promptDe: 'Sollte das Hochschulstudium komplett gebührenfrei sein?' },
+  { id: 'e17', category: 'education', topicEn: 'SPECIAL EDUCATION INCLUSION', topicFr: 'INCLUSION SCOLAIRE', topicDe: 'INKLUSION AN SCHULEN', vocab: [], promptEn: 'How can mainstream classrooms effectively welcome neurodivergent children?', promptFr: 'Comment adapter l’école aux enfants neuro-atypiques sans stigmatisation ?', promptDe: 'Wie gelingt gemeinsame Beschulung neurodivergenter Kinder in der Praxis?' },
+  { id: 'e18', category: 'education', topicEn: 'MEDIA LITERACY TRAINING', topicFr: 'ÉDUCATION AUX MÉDIAS', topicDe: 'MEDIENKOMPETENZ SCHULUNG', vocab: [], promptEn: 'At what age should teens be taught forensic methods to spot fake photos?', promptFr: 'Quand enseigner l’analyse critique des images virales sur les réseaux ?', promptDe: 'Ab welchem Alter sollten Jugendliche Bildmanipulationen erkennen lernen?' },
+  { id: 'e19', category: 'education', topicEn: 'SPORTS IN SCHOOL CURRICULA', topicFr: 'LE SPORT À L’ÉCOLE', topicDe: 'SCHULSPORT BEDEUTUNG', vocab: [], promptEn: 'Does daily compulsory gymnastics improve academic mathematics scores?', promptFr: 'L’activité physique quotidienne renforce-t-elle les résultats scolaires ?', promptDe: 'Verbessert täglicher Schulsport messbar schulische Leistungen in Mathe?' },
+  { id: 'e20', category: 'education', topicEn: 'PHILOSOPHY FOR CHILDREN', topicFr: 'PHILOSOPHIE ENFANTINE', topicDe: 'PHILOSOPHIEREN MIT KINDERN', vocab: [], promptEn: 'Can primary school ethical debates reduce playground bullying incidents?', promptFr: 'Débattre de morale en primaire prévient-il le harcèlement scolaire ?', promptDe: 'Können ethische Gesprächsrunden Mobbing auf dem Schulhof mindern?' },
+  { id: 'e21', category: 'education', topicEn: 'GRADE INFLATION PRESSURES', topicFr: 'INFLATION DES NOTES', topicDe: 'NOTENINFLATION PROBLEM', vocab: [], promptEn: 'Has pressure from parents weakened academic grading standards in colleges?', promptFr: 'La pression des familles fausse-t-elle la sévérité des notations ?', promptDe: 'Führt Eltern-Druck zu einer Verwässerung der Leistungsbewertung?' },
+  { id: 'e22', category: 'education', topicEn: 'BOARDING SCHOOL DYNAMICS', topicFr: 'INTERNATS SCOLAIRES', topicDe: 'INTERNATSERZIEHUNG', vocab: [], promptEn: 'Does residential schooling build lifelong solidarity or emotional isolation?', promptFr: 'La vie en internat forge-t-elle l’indépendance ou le sentiment d’isolement ?', promptDe: 'Stärkt das Internat die Selbstständigkeit oder führt es zu Vereinsamung?' },
+  { id: 'e23', category: 'education', topicEn: 'CLASS SIZE OPTIMIZATION', topicFr: 'EFFECTIFS DES CLASSES', topicDe: 'KLASSENGRÖSSEN REDUZIERUNG', vocab: [], promptEn: 'Is shrinking classes to 15 students more beneficial than investing in better books?', promptFr: 'Réduire les classes à 15 élèves est-il plus efficace qu’acheter du matériel ?', promptDe: 'Bringt die Reduzierung auf 15 Schüler mehr als neue Lehrmittel?' },
+  { id: 'e24', category: 'education', topicEn: 'GAP YEAR IMPACT', topicFr: 'ANNÉE DE CÉSURE', topicDe: 'GAP YEAR ERFAHRUNG', vocab: [], promptEn: 'Does taking a year out for volunteering make students more mature graduates?', promptFr: 'Faire une année de césure avant l’université rend-il plus autonome ?', promptDe: 'Macht ein freiwilliges soziales Jahr vor dem Studium reifer?' },
+  { id: 'e25', category: 'education', topicEn: 'CODING IN EARLY GRADES', topicFr: 'PROGRAMMATION DÈS L’ÉCOLE', topicDe: 'PROGRAMMIEREN AB GRUNDSCHULE', vocab: [], promptEn: 'Is teaching Python to nine-year-olds genuinely useful or a tech company fad?', promptFr: 'Enseigner le code aux enfants est-il une réelle priorité éducative ?', promptDe: 'Ist Programmieren in der Grundschule sinnvoll oder ein Hype?' },
+  { id: 'e26', category: 'education', topicEn: 'GENDER GAP IN STEM', topicFr: 'FILLES ET SCIENCES', topicDe: 'FRAUEN IN MINT', vocab: [], promptEn: 'Why do girls still opt less frequently for mechanical engineering courses?', promptFr: 'Pourquoi les filières d’ingénieurs comptent-elles encore si peu de femmes ?', promptDe: 'Warum wählen Frauen nach wie vor seltener technische Studiengänge?' },
+  { id: 'e27', category: 'education', topicEn: 'OPEN TEXTBOOK INITIATIVES', topicFr: 'MANUELS LIBRES', topicDe: 'OFFENE BILDUNGSMATERIALIEN', vocab: [], promptEn: 'Can free open-source digital textbooks replace costly commercial publishing?', promptFr: 'Les manuels sous licence libre peuvent-ils remplacer les éditeurs payants ?', promptDe: 'Können freie Online-Lehrbücher teure Verlage ersetzen?' },
+  { id: 'e28', category: 'education', topicEn: 'UNIVERSITY ADMISSIONS EQUITY', topicFr: 'SÉLECTION UNIVERSITAIRE', topicDe: 'HOCHSCHULZULASSUNG RECHT', vocab: [], promptEn: 'Should elite universities ban legacy admissions for alumni children?', promptFr: 'Faut-il interdire les passe-droits pour les enfants d’anciens diplômés ?', promptDe: 'Sollte die Bevorzugung von Akademikerkindern verboten werden?' },
+  { id: 'e29', category: 'education', topicEn: 'STUDENT MENTAL HEALTH', topicFr: 'SANTÉ MENTALE ÉTUDIANTE', topicDe: 'PSYCHISCHE GESUNDHEIT STUDENTEN', vocab: [], promptEn: 'Why are university psychological counseling clinics seeing record workloads?', promptFr: 'Pourquoi les services d’écoute des campus sont-ils submergés ?', promptDe: 'Warum sind Beratungsstellen an Universitäten überlastet?' },
+  { id: 'e30', category: 'education', topicEn: 'SOCRATIC SEMINAR METHOD', topicFr: 'MÉTHODE SOCRATIQUE', topicDe: 'SOKRATISCHE METHODE', vocab: [], promptEn: 'Why does guided open questioning sharpen minds better than lecture slides?', promptFr: 'L’art du questionnement socratique surpasse-t-il le cours magistral ?', promptDe: 'Schärft gelenktes Fragen den Verstand besser als Vorlesungen?' },
+  { id: 'e31', category: 'education', topicEn: 'SUMMER SLIDE REMEDIATION', topicFr: 'RATTRAPAGE ESTIVAL', topicDe: 'SOMMERFERIEN LERNVERLUST', vocab: [], promptEn: 'Do long summer breaks set low-income children back academically?', promptFr: 'Les longues vacances d’été pénalisent-elles les élèves modestes ?', promptDe: 'Führen lange Sommerferien zu Wissensverlusten bei benachteiligten Kindern?' },
+  { id: 'e32', category: 'education', topicEn: 'SECOND CHANCE SCHOOLS', topicFr: 'ÉCOLES DE DEUXIÈME CHANCE', topicDe: 'ZWEITER BILDUNGSWEG', vocab: [], promptEn: 'How effectively do adult education centres integrate early school dropouts?', promptFr: 'Comment raccrocher les décrocheurs grâce aux écoles de la seconde chance ?', promptDe: 'Wie wirksam integriert der zweite Bildungsweg Schulabbrecher?' },
+  { id: 'e33', category: 'education', topicEn: 'ACADEMIC TENURE SYSTEM', topicFr: 'TITULARISATION ACADÉMIQUE', topicDe: 'PROFESSORALE LEBENSZEITSTELLE', vocab: [], promptEn: 'Does lifetime professorship safeguard free speech or invite scholarly complacency?', promptFr: 'La titularisation à vie protège-t-elle la recherche ou freine-t-elle l’effort ?', promptDe: 'Schützt die Verbeamtung auf Lebenszeit die freie Lehre?' },
+  { id: 'e34', category: 'education', topicEn: 'ETHICS IN MEDICAL SCHOOL', topicFr: 'BIOÉTHIQUE EN MÉDECINE', topicDe: 'MEDIZINETHIK STUDIUM', vocab: [], promptEn: 'Should palliative bedside communication carry equal credit to biochemistry?', promptFr: 'L’empathie clinique doit-elle compter autant que la biochimie aux examens ?', promptDe: 'Sollte klinische Empathie denselben Stellenwert wie Biochemie haben?' },
+  { id: 'e35', category: 'education', topicEn: 'MICRO CREDENTIAL ACCREDITATION', topicFr: 'MICRO-CERTIFICATIONS', topicDe: 'MICRO-CREDENTIALS', vocab: [], promptEn: 'Will three-week specialized digital certificates replace classic master degrees?', promptFr: 'Les micro-certifications vont-elles détrôner les masters longs ?', promptDe: 'Werden kurze Zertifikatskurse den Masterabschluss verdrängen?' },
+  { id: 'e36', category: 'education', topicEn: 'STUDENT DEBT FORGIVENESS', topicFr: 'ANNULATION DES DETTES', topicDe: 'STUDIENSCHULDEN ERLASS', vocab: [], promptEn: 'Does canceling college loan debts create moral hazard for future students?', promptFr: 'L’annulation de la dette étudiante est-elle équitable pour tous ?', promptDe: 'Ist der Erlass von BAföG-Schulden finanzpolitisch gerecht?' },
+  { id: 'e37', category: 'education', topicEn: 'INTERDISCIPLINARY MAJORS', topicFr: 'DIPLÔMES PLURIDISCIPLINAIRES', topicDe: 'INTERDISZIPLINÄRE STUDIENGÄNGE', vocab: [], promptEn: 'Why are degrees combining computer science with philosophy in demand?', promptFr: 'Pourquoi marier informatique et philosophie séduit-il les employeurs ?', promptDe: 'Warum sind Studiengänge zwischen Informatik und Philosophie gefragt?' },
+  { id: 'e38', category: 'education', topicEn: 'PLAY BASED KINDERGARTEN', topicFr: 'APPRENDRE EN JOUANT', topicDe: 'SPIELBASIERTES LERNEN', vocab: [], promptEn: 'Should structured alphabet drills be banned before age six?', promptFr: 'Faut-il bannir les exercices formels de lecture avant 6 ans ?', promptDe: 'Sollte frontaler Leseunterricht vor dem sechsten Lebensjahr verboten sein?' },
+  { id: 'e39', category: 'education', topicEn: 'SCHOOL UNIFORM DEBATES', topicFr: 'L’UNIFORME SCOLAIRE', topicDe: 'SCHULUNIFORM DEBATTE', vocab: [], promptEn: 'Does mandatory identical dress reduce peer pressure and socioeconomic bullying?', promptFr: 'Le port de l’uniforme efface-t-il les rivalités de marques entre élèves ?', promptDe: 'Verringert einheitliche Kleidung Markenzwang und Mobbing?' },
+  { id: 'e40', category: 'education', topicEn: 'SCIENTIFIC INTEGRITY TRAINING', topicFr: 'INTÉGRITÉ SCIENTIFIQUE', topicDe: 'GUTE WISSENSCHAFTLICHE PRAXIS', vocab: [], promptEn: 'How can doctoral academies identify faked dataset citations before publishing?', promptFr: 'Comment contrer la falsification des données chez les doctorants ?', promptDe: 'Wie verhindern Universitäten Datenmanipulation bei Doktorarbeiten?' },
+  { id: 'e41', category: 'education', topicEn: 'SCHOOL LUNCH NUTRITION', topicFr: 'CANTINES BIOLOGIQUES', topicDe: 'SCHULVERPFLEGUNG QUALITÄT', vocab: [], promptEn: 'Does serving organic, balanced school lunches directly boost reading marks?', promptFr: 'Des repas sains à la cantine améliorent-ils l’attention en classe ?', promptDe: 'Verbessert gesundes Kantinenessen die Aufmerksamkeit im Unterricht?' },
+  { id: 'e42', category: 'education', topicEn: 'FLIPPED CLASSROOM ADVANTAGES', topicFr: 'CLASSE INVERSÉE', topicDe: 'FLIPPED CLASSROOM', vocab: [], promptEn: 'Is watching lecture videos at home and doing exercises at school superior?', promptFr: 'Regarder la théorie chez soi et pratiquer en cours est-il plus payant ?', promptDe: 'Ist die Vorbereitung per Video zu Hause und Üben im Unterricht besser?' },
+  { id: 'e43', category: 'education', topicEn: 'ADULT LITERACY CAMPAIGNS', topicFr: 'LUTTE CONTRE L’ILLETTRISME', topicDe: 'ALPHABETISIERUNG ERWACHSENE', vocab: [], promptEn: 'How can municipalities discretely help illiterate adults master paperwork?', promptFr: 'Comment aider sans honte les adultes victimes d’illettrisme ?', promptDe: 'Wie können Kommunen Erwachsene diskret beim Lesenlernen unterstützen?' },
+  { id: 'e44', category: 'education', topicEn: 'CREATIVE WRITING WORKSHOPS', topicFr: 'ATELIERS D’ÉCRITURE', topicDe: 'KREATIVES SCHREIBEN', vocab: [], promptEn: 'Can the craft of novel writing be taught through structured exercises?', promptFr: 'Le talent d’écrivain peut-il s’enseigner dans des ateliers ?', promptDe: 'Kann man schriftstellerisches Handwerk in Workshops erlernen?' },
+  { id: 'e45', category: 'education', topicEn: 'DEBATE CLUBS IN SCHOOLS', topicFr: 'CLUBS DE DÉBAT', topicDe: 'DEBATTIERCLUBS AN SCHULEN', vocab: [], promptEn: 'Does defending an opinion you personally despise teach civil tolerance?', promptFr: 'Défendre la thèse opposée à ses convictions enseigne-t-il la tolérance ?', promptDe: 'Lehrt das Verteidigen einer Gegenposition echte Toleranz?' },
+  { id: 'e46', category: 'education', topicEn: 'STUDENT EVALUATIONS REFORM', topicFr: 'ÉVALUATION DES PROFS', topicDe: 'LEHRERBEWERTUNG DURCH SCHÜLER', vocab: [], promptEn: 'Do anonymous student reviews incentivize teachers to assign easy high grades?', promptFr: 'Les avis anonymes des élèves poussent-ils à surnoter pour plaire ?', promptDe: 'Verleiten Schülerbewertungen Lehrer zu Gefälligkeitsnoten?' },
+  { id: 'e47', category: 'education', topicEn: 'COMMUNITY COLLEGE ROLE', topicFr: 'COLLÈGES COMMUNAUTAIRES', topicDe: 'FACHHOCHSCHULEN ROLLE', vocab: [], promptEn: 'Why are local two-year technical colleges key ladders to the middle class?', promptFr: 'Les formations courtes professionnelles sont-elles le vrai ascenseur social ?', promptDe: 'Warum sind praxisnahe Fachhochschulen tragende Säulen des Aufstiegs?' },
+  { id: 'e48', category: 'education', topicEn: 'CAMPUS FREE SPEECH POLICIES', topicFr: 'LIBERTÉ D’EXPRESSION CAMPUS', topicDe: 'REDEFREIHEIT AM CAMPUS', vocab: [], promptEn: 'Where should universities draw the boundary between safety and free debate?', promptFr: 'Où fixer la frontière entre protection des étudiants et débat sans filtre ?', promptDe: 'Wo verläuft die Grenze zwischen Schutzraum und freiem Diskurs am Campus?' },
+  { id: 'e49', category: 'education', topicEn: 'MUSIC TUITION COGNITIVE GAINS', topicFr: 'ÉVEIL MUSICAL PRÉCOCE', topicDe: 'MUSIKALISCHE FRÜHFÖRDERUNG', vocab: [], promptEn: 'Does learning violin notation enhance spatial-mathematical brain wiring?', promptFr: 'Pratiquer un instrument modifie-t-il les connexions neuronales ?', promptDe: 'Fördert das Erlernen eines Instruments mathematische Fähigkeiten?' },
+  { id: 'e50', category: 'education', topicEn: 'GLOBAL EXCHANGE PROGRAMMES', topicFr: 'PROGRAMMES D’ÉCHANGE', topicDe: 'STUDENTEN AUSTAUSCH ERASMUS', vocab: [], promptEn: 'How did Erasmus scholarships forge a shared pan-European citizen mindset?', promptFr: 'Comment le programme Erasmus a-t-il forgé une identité transfrontalière ?', promptDe: 'Wie prägte das Erasmus-Programm ein gemeinsames europäisches Bewusstsein?' },
+];
+
+// 50 Economy topics (ec1 - ec50)
+const ECONOMY_TOPICS: TopicItem[] = [
+  {
+    id: 'ec1',
+    category: 'economy',
+    topicEn: 'CIRCULAR ECONOMY TRANSITION',
+    topicFr: 'ÉCONOMIE CIRCULAIRE',
+    topicDe: 'KREISLAUFWIRTSCHAFT WANDEL',
+    vocab: [
+      { en: 'Regenerative', fr: 'Régénératif', de: 'Regenerativ', pos: 'adj', definitionEn: 'Restoring natural vitality', definitionFr: 'Qui restaure les équilibres naturels', definitionDe: 'Natürliche Ressourcen erneuernd' },
+      { en: 'Lifecycle', fr: 'Cycle de vie', de: 'Lebenszyklus', pos: 'n', definitionEn: 'Cradle-to-grave path of a product', definitionFr: 'Étapes d’un produit de sa conception au recyclage', definitionDe: 'Phasen von Herstellung bis Entsorgung' }
+    ],
+    promptEn: 'How can industrial manufacturers be compelled to engineer products for easy disassembly and reuse?',
+    promptFr: 'Comment contraindre les industriels à concevoir des objets facilement réparables ?',
+    promptDe: 'Wie können Hersteller zu reparaturfreundlichem Produktdesign verpflichtet werden?'
+  },
+  {
+    id: 'ec2',
+    category: 'economy',
+    topicEn: 'UNIVERSAL BASIC INCOME',
+    topicFr: 'REVENU UNIVERSEL',
+    topicDe: 'BEDINGUNGSLOSES GRUNDEINKOMMEN',
+    vocab: [
+      { en: 'Safety-net', fr: 'Filet social', de: 'Soziales Netz', pos: 'n', definitionEn: 'Protection preventing destitution', definitionFr: 'Garantie contre la misère', definitionDe: 'Schutz vor existenzieller Not' },
+      { en: 'Unconditional', fr: 'Inconditionnel', de: 'Bedingungslos', pos: 'adj', definitionEn: 'Granted without means testing', definitionFr: 'Attribué sans conditions de ressources', definitionDe: 'Ohne Vorbedingungen gewährt' }
+    ],
+    promptEn: 'Would a monthly guaranteed state payout reduce work morale or encourage entrepreneurship?',
+    promptFr: 'Une allocation mensuelle inconditionnelle découragerait-elle le travail salarié ?',
+    promptDe: 'Würde ein festes Grundeinkommen die Arbeitsbereitschaft senken oder Gründungen fördern?'
+  },
+  {
+    id: 'ec3',
+    category: 'economy',
+    topicEn: 'GIG ECONOMY WORKER RIGHTS',
+    topicFr: 'DROITS DES UBERISÉS',
+    topicDe: 'GIG-ECONOMY ARBEITSRECHTE',
+    vocab: [
+      { en: 'Freelance', fr: 'Indépendant', de: 'Freiberuflich', pos: 'adj', definitionEn: 'Self-employed project based work', definitionFr: 'Travaillant à son propre compte', definitionDe: 'Selbstständig auf Projektbasis' },
+      { en: 'Vulnerability', fr: 'Précarité', de: 'Prekariat', pos: 'n', definitionEn: 'Susceptibility to insecurity', definitionFr: 'Absence de garanties de stabilité', definitionDe: 'Unsichere Lebensverhältnisse' }
+    ],
+    promptEn: 'Should smartphone app delivery couriers be legally reclassified as standard payroll employees?',
+    promptFr: 'Faut-il requalifier les livreurs des plateformes en salariés de plein droit ?',
+    promptDe: 'Sollten Plattform-Kuriere rechtlich als festangestellte Arbeitnehmer gelten?'
+  },
+  {
+    id: 'ec4',
+    category: 'economy',
+    topicEn: 'GREEN ENERGY SUBSIDIES',
+    topicFr: 'SUBVENTIONS VERTES',
+    topicDe: 'GRÜNE ENERGIE SUBVENTIONEN',
+    vocab: [
+      { en: 'Incentivize', fr: 'Inciter', de: 'Anreize schaffen', pos: 'v', definitionEn: 'Encourage specific behavior', definitionFr: 'Pousser financièrement à agir', definitionDe: 'Wirtschaftlich motivieren' },
+      { en: 'Grid parity', fr: 'Parité réseau', de: 'Netzparität', pos: 'n', definitionEn: 'Renewable cost matching fossil power', definitionFr: 'Égalité des coûts avec les fossiles', definitionDe: 'Kostengleichheit erneuerbarer Energien' }
+    ],
+    promptEn: 'Should state support for solar parks be wound down once photovoltaic electricity beats coal costs?',
+    promptFr: 'Faut-il supprimer les aides solaires dès qu’elles rivalisent avec le charbon ?',
+    promptDe: 'Sollten Solar-Subventionen auslaufen, sobald Sonnenstrom rentabler als Kohle ist?'
+  },
+  {
+    id: 'ec5',
+    category: 'economy',
+    topicEn: 'CENTRAL BANK DIGITAL CURRENCIES',
+    topicFr: 'MONNAIES NUMÉRIQUES D’ÉTAT',
+    topicDe: 'DIGITALE ZENTRALBANK-WÄHRUNGEN',
+    vocab: [
+      { en: 'Sovereignty', fr: 'Souveraineté', de: 'Souveränität', pos: 'n', definitionEn: 'Exclusive legitimate legal power', definitionFr: 'Autorité suprême reconnue', definitionDe: 'Höchste staatliche Entscheidungsgewalt' },
+      { en: 'Cashless', fr: 'Sans numéraire', de: 'Bargeldlos', pos: 'adj', definitionEn: 'Operating without paper banknotes', definitionFr: 'Fonctionnant sans billets de banque', definitionDe: 'Ohne physische Banknoten' }
+    ],
+    promptEn: 'Could state electronic currencies spell the total surveillance death of anonymous paper cash?',
+    promptFr: 'L’euro numérique sonnera-t-il le glas de la confidentialité des espèces ?',
+    promptDe: 'Führen digitale Zentralbankwährungen zum gläsernen Bürger ohne Bargeld?'
+  },
+  { id: 'ec6', category: 'economy', topicEn: 'GLOBAL SUPPLY CHAIN RESILIENCE', topicFr: 'RÉSILIENCE DES APPROVISIONNEMENTS', topicDe: 'LIEFERKETTEN SICHERHEIT', vocab: [], promptEn: 'Is nearshoring factory production safer than relying on cheap maritime shipping?', promptFr: 'Relocaliser l’industrie protège-t-il mieux des pénuries mondiales ?', promptDe: 'Ist Nearshoring krisensicherer als weltweiter Container-Transport?' },
+  { id: 'ec7', category: 'economy', topicEn: 'HOUSING AFFORDABILITY CRISIS', topicFr: 'CRISE DU LOGEMENT', topicDe: 'WOHNUNGSNOT IN STÄDTEN', vocab: [], promptEn: 'Why do major capitals consistently fail to construct enough entry-level flats?', promptFr: 'Pourquoi les métropoles peinent-elles à loger les classes moyennes ?', promptDe: 'Warum scheitern Großstädte beim Bau bezahlbaren Wohnraums?' },
+  { id: 'ec8', category: 'economy', topicEn: 'CARBON CREDIT TRADING MARKETS', topicFr: 'MARCHÉ DU CARBONE', topicDe: 'EMISSIONSHANDEL SYSTEME', vocab: [], promptEn: 'Do voluntary carbon offsets finance genuine reforestation or pure greenwashing?', promptFr: 'Les crédits carbone compensent-ils les émissions ou favorisent-ils le greenwashing ?', promptDe: 'Finanzieren Emissionszertifikate Klimaschutz oder reines Greenwashing?' },
+  { id: 'ec9', category: 'economy', topicEn: 'AUTOMATION IN LIGHT INDUSTRY', topicFr: 'AUTOMATISATION INDUSTRIELLE', topicDe: 'AUTOMATISIERUNG INDUSTRIE', vocab: [], promptEn: 'Will factory robotics destroy more shopfloor livelihoods than it creates engineering jobs?', promptFr: 'Les robots d’usine détruiront-ils plus d’emplois qu’ils n’en créent ?', promptDe: 'Vernichtet Industrie-Robotik mehr Stellen als sie neue schafft?' },
+  { id: 'ec10', category: 'economy', topicEn: 'WEALTH TAXATION DEBATE', topicFr: 'IMPÔT SUR LA FORTUNE', topicDe: 'VERMÖGENSSTEUER DEBATTE', vocab: [], promptEn: 'Does taxing billionaire capital assets cause brain drain to tax havens?', promptFr: 'Taxer les grandes fortunes provoque-t-il l’exil fiscal ?', promptDe: 'Führt eine Reichensteuer zur Kapitalflucht in Steueroasen?' },
+  { id: 'ec11', category: 'economy', topicEn: 'INFLATION CONTROLLING TOOLS', topicFr: 'MAÎTRISE DE L’INFLATION', topicDe: 'INFLATIONS-BEKÄMPFUNG', vocab: [], promptEn: 'Can interest rate hikes cool inflation without causing harsh unemployment spikes?', promptFr: 'Monter les taux d’intérêt jugule-t-il l’inflation sans créer de récession ?', promptDe: 'Können Leitzinserhöhungen Preise senken, ohne Rezessionen auszulösen?' },
+  { id: 'ec12', category: 'economy', topicEn: 'FOUR DAY WORK WEEK', topicFr: 'SEMAINE DE 4 JOURS', topicDe: 'VIER-TAGE-WOCHE', vocab: [], promptEn: 'Do companies running 32-hour work weeks report sustained team productivity?', promptFr: 'La semaine de 32 heures préserve-t-elle la productivité des entreprises ?', promptDe: 'Hält die 32-Stunden-Woche die Produktivität bei vollem Lohnausgleich?' },
+  { id: 'ec13', category: 'economy', topicEn: 'MICROFINANCE IN RURAL REGIONS', topicFr: 'MICROCRÉDIT RURAL', topicDe: 'MIKROKREDITE ENTWICKLUNG', vocab: [], promptEn: 'Have small collateral-free microloans lifted female village entrepreneurs out of poverty?', promptFr: 'Le microcrédit a-t-il réellement émancipé les femmes dans les villages ?', promptDe: 'Haben Kleinstkredite Frauen in Schwellenländern aus der Armut befreit?' },
+  { id: 'ec14', category: 'economy', topicEn: 'SOVEREIGN DEBT CRISIS', topicFr: 'DETTE SOUVERAINE', topicDe: 'STAATSVERSCHULDUNG', vocab: [], promptEn: 'When public debt exceeds 120% of GDP, does growth inevitably grind to a halt?', promptFr: 'Un endettement public massif condamne-t-il la croissance future ?', promptDe: 'Bremst eine Staatsverschuldung über 120% des BIP das Wachstum aus?' },
+  { id: 'ec15', category: 'economy', topicEn: 'AGRICULTURAL PRICE SUBSIDIES', topicFr: 'SUBVENTIONS AGRICOLES', topicDe: 'AGRAR-SUBVENTIONEN', vocab: [], promptEn: 'Does subsidizing grain production harm developing world family farmers?', promptFr: 'Les aides de la politique agricole faussent-elles la concurrence mondiale ?', promptDe: 'Schaden westliche Agrarsubventionen den Bauern im globalen Süden?' },
+  { id: 'ec16', category: 'economy', topicEn: 'DE-GLOBALIZATION TRADE BARRIERS', topicFr: 'DÉMONDIALISATION COMMERCIALE', topicDe: 'DEGLOBALISIERUNG ZÖLLE', vocab: [], promptEn: 'Will escalating bilateral customs tariffs lower domestic manufacturing prices?', promptFr: 'L’érection de barrières douanières protège-t-elle le pouvoir d’achat ?', promptDe: 'Schützen Schutzzölle heimische Arbeitsplätze oder treiben sie Preise?' },
+  { id: 'ec17', category: 'economy', topicEn: 'FINTECH BANKING DISRUPTION', topicFr: 'ESSOR DES NÉOBANQUES', topicDe: 'FINTECH BANKENWANDEL', vocab: [], promptEn: 'Why are smartphone challenger apps outmaneuvering brick-and-mortar branch banks?', promptFr: 'Pourquoi les banques en ligne supplantent-elles les agences de quartier ?', promptDe: 'Warum verdrängen Smartphone-Banken klassische Filialbanken?' },
+  { id: 'ec18', category: 'economy', topicEn: 'MINIMUM WAGE STATUTES', topicFr: 'SALAIRE MINIMUM LÉGAL', topicDe: 'MINDESTLOHN GESETZ', vocab: [], promptEn: 'Does a sudden minimum wage hike trigger job automation in fast-food chains?', promptFr: 'Augmenter le salaire minimum accélère-t-il l’installation de bornes de commande ?', promptDe: 'Beschleunigt ein höherer Mindestlohn den Einsatz von Bestellautomaten?' },
+  { id: 'ec19', category: 'economy', topicEn: 'CIRCULAR PACKAGING MANDATES', topicFr: 'CONSIGNE DES EMBALLAGES', topicDe: 'EINWEGPFAND PFLICHT', vocab: [], promptEn: 'How effectively do bottle return deposit laws banish roadside plastic waste?', promptFr: 'Le retour de la consigne en verre éradique-t-il la pollution plastique ?', promptDe: 'Wie wirksam verhindert das Pfandsystem Plastikmüll in der Natur?' },
+  { id: 'ec20', category: 'economy', topicEn: 'VENTURE CAPITAL DOWN-ROUNDS', topicFr: 'CRISE DU CAPITAL-RISQUE', topicDe: 'VENTURE-CAPITAL KRISE', vocab: [], promptEn: 'Why has cheap borrowing era ended for loss-making software startups?', promptFr: 'La fin de l’argent gratuit condamne-t-elle les start-ups non rentables ?', promptDe: 'Warum müssen unrentable Start-ups nach der Zinswende sparen?' },
+  { id: 'ec21', category: 'economy', topicEn: 'PENSION AGE ADJUSTMENT', topicFr: 'ÂGE DE LA RETRAITE', topicDe: 'RENTENALTER ANHEBUNG', vocab: [], promptEn: 'How can pay-as-you-go retirement systems balance books as demographics age?', promptFr: 'Comment financer les retraites face au vieillissement de la population ?', promptDe: 'Wie lässt sich das Rentensystem bei schrumpfender Erwerbsbevölkerung sichern?' },
+  { id: 'ec22', category: 'economy', topicEn: 'ANTI-MONOPOLY TECH BREAKUPS', topicFr: 'DÉMANTÈLEMENT DES GÉANTS', topicDe: 'KARTELRECHT BIG-TECH', vocab: [], promptEn: 'Should search engine giants be forced to spin off browser and ad units?', promptFr: 'Faut-il scinder les multinationales du Web pour restaurer la concurrence ?', promptDe: 'Sollten Technologie-Konzerne kartellrechtlich aufgespalten werden?' },
+  { id: 'ec23', category: 'economy', topicEn: 'SHARING ECONOMY AUTO-POOLS', topicFr: 'AUTO-PARTAGE URBAIN', topicDe: 'CARSHARING MODELLE', vocab: [], promptEn: 'Can neighborhood car clubs replace private suburban car ownership entirely?', promptFr: 'L’auto-partage peut-il convaincre les ménages d’abandonner leur voiture ?', promptDe: 'Kann Carsharing den privaten Pkw-Besitz in Städten ersetzen?' },
+  { id: 'ec24', category: 'economy', topicEn: 'SOVEREIGN WEALTH FUNDS', topicFr: 'FONDS SOUVERAINS', topicDe: 'STAATSFONDS ANLAGEN', vocab: [], promptEn: 'How should oil-exporting nations invest commodity riches for post-fossil eras?', promptFr: 'Comment placer la rente pétrolière pour préparer l’après-carbone ?', promptDe: 'Wie sollten Rohstoffländer Einnahmen für die Zeit nach dem Öl anlegen?' },
+  { id: 'ec25', category: 'economy', topicEn: 'URBAN CONGESTION PRICING', topicFr: 'PÉAGE URBAIN', topicDe: 'CITY-MAUT MODELLE', vocab: [], promptEn: 'Does charging cars to enter city centers regenerate clean air or penalize low wages?', promptFr: 'Le péage urbain est-il une taxe antisociale ou une mesure écologique ?', promptDe: 'Ist eine City-Maut ein Klimainstrument oder eine unsoziale Belastung?' },
+  { id: 'ec26', category: 'economy', topicEn: 'TRADE SECRET LITIGATION', topicFr: 'SECRET DES AFFAIRES', topicDe: 'GESCHÄFTSGEHEIMNIS SCHUTZ', vocab: [], promptEn: 'How do corporations defend battery formula patents from rival ex-engineers?', promptFr: 'Comment protéger les brevets industriels face à la fuite des cerveaux ?', promptDe: 'Wie verteidigen Unternehmen Entwicklungsgeheimnisse vor Spionage?' },
+  { id: 'ec27', category: 'economy', topicEn: 'CORPORATE TAX HARMONIZATION', topicFr: 'IMPÔT MONDIAL MINIMUM', topicDe: 'GLOBALE MINDESTSTEUER', vocab: [], promptEn: 'Will the 15% global minimum corporate tax halt the international race to bottom?', promptFr: 'L’impôt minimal mondial à 15% mettra-t-il fin au dumping fiscal ?', promptDe: 'Beendet die globale Mindeststeuer den internationalen Steuerwettlauf?' },
+  { id: 'ec28', category: 'economy', topicEn: 'CREDIT SCORE ALGORITHMS', topicFr: 'NOTATION DE CRÉDIT', topicDe: 'KREDITWÜRDIGKEIT SCORING', vocab: [], promptEn: 'Do automatic loan risk algorithms reproduce subtle historical banking biases?', promptFr: 'Les algorithmes bancaires pénalisent-ils injustement certains profils ?', promptDe: 'Diskriminieren automatisierte Scoring-Modelle bestimmte Kreditnehmer?' },
+  { id: 'ec29', category: 'economy', topicEn: 'REMOTE WORK TAX REGULATION', topicFr: 'TÉLÉTRAVAIL TRANSFRONTALIER', topicDe: 'HOMEOFFICE BESTEUERUNG', vocab: [], promptEn: 'Where should digital nomads working from beaches pay their income taxes?', promptFr: 'Où les télétravailleurs nomades doivent-ils déclarer leurs impôts ?', promptDe: 'In welchem Land sollten ortsunabhängige Angestellte Steuern zahlen?' },
+  { id: 'ec30', category: 'economy', topicEn: 'COMMODITY SPECULATION SPREADS', topicFr: 'SPÉCULATION SUR LE BLÉ', topicDe: 'ROHSTOFF-SPEKULATION', vocab: [], promptEn: 'Does trading grain futures drive up bread prices in starving nations?', promptFr: 'La spéculation boursière aggrave-t-elle les famines dans le monde ?', promptDe: 'Treibt der Terminhandel mit Weizen Lebensmittelpreise künstlich hoch?' },
+  { id: 'ec31', category: 'economy', topicEn: 'TOURIST TAX RESTRICTIONS', topicFr: 'TAXE DE SÉJOUR', topicDe: 'TOURISTEN-ABGABEN', vocab: [], promptEn: 'Can five-euro daily entry tickets protect fragile canal cities like Venice?', promptFr: 'Un droit d’entrée quotidien peut-il sauver Venise du tourisme de masse ?', promptDe: 'Kann eine Tagesgebühr überlaufene Städte wie Venedig schützen?' },
+  { id: 'ec32', category: 'economy', topicEn: 'FAIR TRADE LABELLING', topicFr: 'COMMERCE ÉQUITABLE', topicDe: 'FAIR-TRADE ZERTIFIZIERUNG', vocab: [], promptEn: 'Does paying extra for fair-trade coffee reach smallholder Andean growers?', promptFr: 'Le surcoût du café équitable parvient-il vraiment aux petits producteurs ?', promptDe: 'Kommt der Aufpreis für Fair-Trade-Kaffee Kleinbauern wirklich zugute?' },
+  { id: 'ec33', category: 'economy', topicEn: 'DEFICIT SPENDING DEBATES', topicFr: 'RELANCE BUDGÉTAIRE', topicDe: 'KEYNESIANISCHE AUSGABEN', vocab: [], promptEn: 'Should governments borrow boldly during downturns to build bridges and rails?', promptFr: 'L’État doit-il s’endetter massivement pour relancer l’activité en crise ?', promptDe: 'Sollten Staaten in Krisen schuldenfinanzierte Konjunkturprogramme auflegen?' },
+  { id: 'ec34', category: 'economy', topicEn: 'SUBSCRIPTION BUSINESS MODELS', topicFr: 'MODÈLE D’ABONNEMENT', topicDe: 'ABONNEMENT-MODELL BOOM', vocab: [], promptEn: 'Are consumers tired of paying monthly rentals for software and tractors?', promptFr: 'Les consommateurs saturent-ils de louer leurs logiciels et objets au mois ?', promptDe: 'Haben Verbraucher genug von monatlichen Mietmodellen für Alltagsdinge?' },
+  { id: 'ec35', category: 'economy', topicEn: 'FREE TRADE AGREEMENTS', topicFr: 'TRAITÉS DE LIBRE-ÉCHANGE', topicDe: 'FREIHANDELSABKOMMEN', vocab: [], promptEn: 'Do multinational free trade deals lower retail costs at the expense of safety laws?', promptFr: 'Le libre-échange réduit-il les prix au détriment des normes sanitaires ?', promptDe: 'Senken Freihandelsabkommen Preise auf Kosten von Umweltstandards?' },
+  { id: 'ec36', category: 'economy', topicEn: 'HOUSING RENT CONTROL', topicFr: 'PLAFONNEMENT DES LOYERS', topicDe: 'MIETPREISBREMSE GESETZ', vocab: [], promptEn: 'Does capping residential rents protect tenants or freeze new construction?', promptFr: 'L’encadrement des loyers protège-t-il les locataires ou freine-t-il la rénovation ?', promptDe: 'Schützt die Mietpreisbremse Mieter oder verhindert sie Neubauten?' },
+  { id: 'ec37', category: 'economy', topicEn: 'UNEMPLOYMENT BENEFIT DURATION', topicFr: 'ASSURANCE CHÔMAGE', topicDe: 'ARBEITSLOSENGELD DAUER', vocab: [], promptEn: 'What is the optimal payout period before long-term labor detachment begins?', promptFr: 'Quelle durée d’indemnisation favorise le retour rapide à l’emploi ?', promptDe: 'Wie lange sollte Arbeitslosengeld gezahlt werden, um Wiedereinstieg zu fördern?' },
+  { id: 'ec38', category: 'economy', topicEn: 'ETHICAL BANKING DEPOSITS', topicFr: 'BANQUES ÉTHIQUES', topicDe: 'ETHISCHE BANKEN', vocab: [], promptEn: 'Can cooperative banks refuse loans to weapons and fossil fuel extraction?', promptFr: 'Les banques éthiques peuvent-elles refuser de financer l’armement ?', promptDe: 'Können ethische Banken Kredite für Rüstung und Kohle konsequent ablehnen?' },
+  { id: 'ec39', category: 'economy', topicEn: 'LABOUR UNION REVITALIZATION', topicFr: 'SYNDICALISME DE COMBAT', topicDe: 'GEWERKSCHAFTS-REVIVAL', vocab: [], promptEn: 'Why are warehouse and barista employees organizing fresh collective unions?', promptFr: 'Pourquoi les salariés de la logistique se syndiquent-ils en masse ?', promptDe: 'Warum gründen Beschäftigte in Lagern und Cafés neue Gewerkschaften?' },
+  { id: 'ec40', category: 'economy', topicEn: 'ELECTRIC VEHICLE TARIFFS', topicFr: 'DROITS DE DOUANE SUR LES V.E.', topicDe: 'ELEKTROAUTO ZÖLLE', vocab: [], promptEn: 'Should states impose 50% tariffs on subsidized foreign electric cars?', promptFr: 'Faut-il surtaxer les voitures électriques étrangères subventionnées ?', promptDe: 'Sollten subventionierte E-Autos aus Übersee mit Strafzöllen belegt werden?' },
+  { id: 'ec41', category: 'economy', topicEn: 'CIRCULAR TEXTILE RECYCLING', topicFr: 'RECYCLAGE DU TEXTILE', topicDe: 'TEXTILRECYCLING PFLICHT', vocab: [], promptEn: 'Can sorting technologies spin old polyester garments into high-grade fiber?', promptFr: 'Les filières de tri peuvent-elles recycler le polyester usagé en fils neufs ?', promptDe: 'Kann Altkleider-Recycling synthetische Fasern wieder hochwertig aufbereiten?' },
+  { id: 'ec42', category: 'economy', topicEn: 'PATENT EXPIRY BIO-SIMILARS', topicFr: 'MÉDICAMENTS GÉNÉRIQUES', topicDe: 'PATENTABLAUF GENERIKA', vocab: [], promptEn: 'How do generic medications lower healthcare costs for developing nations?', promptFr: 'Comment l’arrivée des génériques soulage-t-elle les budgets de santé ?', promptDe: 'Wie senken Nachahmer-Medikamente die Kosten der Krankenkassen?' },
+  { id: 'ec43', category: 'economy', topicEn: 'GOLD RESERVES DIVERSIFICATION', topicFr: 'RÉSERVES D’OR MONDIALES', topicDe: 'GOLDRESERVEN ANKAUF', vocab: [], promptEn: 'Why are emerging central banks stockpiling gold bars over treasury bonds?', promptFr: 'Pourquoi les banques centrales achètent-elles de l’or en masse ?', promptDe: 'Warum stocken Notenbanken weltweit ihre Goldreserven massiv auf?' },
+  { id: 'ec44', category: 'economy', topicEn: 'SUGAR TAX ON BEVERAGES', topicFr: 'TAXE SODA SANTÉ', topicDe: 'ZUCKERSTEUER AUF GETRÄNKE', vocab: [], promptEn: 'Did levying taxes on sweet carbonated soda reduce childhood obesity rates?', promptFr: 'La taxe sur les boissons sucrées a-t-elle fait baisser le diabète infantile ?', promptDe: 'Hat die Sonderabgabe auf Limonaden Übergewicht bei Jugendlichen gesenkt?' },
+  { id: 'ec45', category: 'economy', topicEn: 'PRIVATE EQUITY HOSPITAL BUYOUTS', topicFr: 'FONDS D’INVESTISSEMENT SANTÉ', topicDe: 'FINANZINVESTOREN KLINIKEN', vocab: [], promptEn: 'Does venture capital ownership of clinics compromise patient safety standards?', promptFr: 'La rentabilité exigée par les fonds dégrade-t-elle les soins à l’hôpital ?', promptDe: 'Gefährdet die Renditejagd von Investoren die medizinische Versorgung?' },
+  { id: 'ec46', category: 'economy', topicEn: 'ZERO-HOUR CONTRACT BANS', topicFr: 'CONTRATS ZÉRO HEURE', topicDe: 'NULL-STUNDEN-VERTRÄGE', vocab: [], promptEn: 'Why have multiple countries legislated against zero-hour labor contracts?', promptFr: 'Pourquoi plusieurs pays interdisent-ils les contrats sans horaires garantis ?', promptDe: 'Warum verbieten mehrere Länder Arbeitsverträge ohne Mindeststundenzahl?' },
+  { id: 'ec47', category: 'economy', topicEn: 'LUXURY GOODS CONSUMPTION', topicFr: 'CONSOMMATION DE LUXE', topicDe: 'LUXUSGÜTER NACHFRAGE', vocab: [], promptEn: 'Why do luxury conglomerates see surging profit margins during high inflation?', promptFr: 'Pourquoi les marques de luxe battent-elles des records en période d’inflation ?', promptDe: 'Warum verzeichnen Luxusmarken auch in Krisenzeiten Rekordgewinne?' },
+  { id: 'ec48', category: 'economy', topicEn: 'REGIONAL AIRPORT SUBSIDIES', topicFr: 'AÉROPORTS RÉGIONAUX', topicDe: 'REGIONALFLUGHAFEN KOSTEN', vocab: [], promptEn: 'Should public taxpayers bail out empty provincial airports for cheap airlines?', promptFr: 'Faut-il financer avec l’argent public des aéroports provinciaux déficitaires ?', promptDe: 'Sollte der Steuerzahler unrentable Regionalflughäfen bezuschussen?' },
+  { id: 'ec49', category: 'economy', topicEn: 'INSIDER TRADING DETECTION', topicFr: 'DÉLITS D’INITIÉ', topicDe: 'INSIDERHANDEL AUFDECKUNG', vocab: [], promptEn: 'How do market regulators flag abnormal option purchases before buyout news?', promptFr: 'Comment les gendarmes de la bourse repèrent-ils les opérations frauduleuses ?', promptDe: 'Wie decken Aufsichtsbehörden verdächtige Aktiendeals vor Übernahmen auf?' },
+  { id: 'ec50', category: 'economy', topicEn: 'COOPERATIVE BUSINESS OWNERSHIP', topicFr: 'SOCIÉTÉS COOPÉRATIVES', topicDe: 'GENOSSENSCHAFTEN MODELL', vocab: [], promptEn: 'Why are employee-owned worker cooperatives more resilient during recessions?', promptFr: 'Pourquoi les coopératives ouvrières résistent-elles mieux aux crises ?', promptDe: 'Warum erweisen sich mitarbeitergeführte Genossenschaften als krisenfester?' },
+];
+
+// 50 Technology topics (t1 - t50)
+const TECH_TOPICS: TopicItem[] = [
+  {
+    id: 't1',
+    category: 'technology',
+    topicEn: 'QUANTUM COMPUTING HORIZONS',
+    topicFr: 'INFORMATIQUE QUANTIQUE',
+    topicDe: 'QUANTENCOMPUTER ZUKUNFT',
+    vocab: [
+      { en: 'Superposition', fr: 'Superposition', de: 'Superposition', pos: 'n', definitionEn: 'Simultaneous multiple quantum states', definitionFr: 'États quantiques multiples en simultané', definitionDe: 'Gleichzeitiges Bestehen mehrerer Zustände' },
+      { en: 'Cryptography', fr: 'Cryptographie', de: 'Kryptographie', pos: 'n', definitionEn: 'Science of encrypting sensitive data', definitionFr: 'Art de protéger les données secrètes', definitionDe: 'Wissenschaft der Informationsverschlüsselung' }
+    ],
+    promptEn: 'How soon will quantum decryption render standard online banking protocols vulnerable?',
+    promptFr: 'Dans combien de temps le calcul quantique cassera-t-il les clés bancaires ?',
+    promptDe: 'Wie bald bedroht Quantenberechnung herkömmliche Banken-Verschlüsselung?'
+  },
+  {
+    id: 't2',
+    category: 'technology',
+    topicEn: 'AUTONOMOUS VEHICLE SAFETY',
+    topicFr: 'SÉCURITÉ DES VÉHICULES',
+    topicDe: 'AUTONOMES FAHREN SICHERHEIT',
+    vocab: [
+      { en: 'Liability', fr: 'Responsabilité', de: 'Haftung', pos: 'n', definitionEn: 'Legal accountability for damages', definitionFr: 'Obligation de réparer un préjudice', definitionDe: 'Gesetzliche Verpflichtung zum Schadenersatz' },
+      { en: 'LiDAR', fr: 'LiDAR', de: 'LiDAR', pos: 'n', definitionEn: 'Laser optical distance sensor', definitionFr: 'Capteur de détection par faisceau laser', definitionDe: 'Optische Laser-Abstandsmessung' }
+    ],
+    promptEn: 'When an autopilot car crashes, should liability fall on the software firm or owner?',
+    promptFr: 'En cas d’accident autonome, la faute incombe-t-elle au fabricant ou au passager ?',
+    promptDe: 'Haftet bei einem Unfall des Autopiloten der Softwarehersteller oder der Halter?'
+  },
+  {
+    id: 't3',
+    category: 'technology',
+    topicEn: 'BRAIN COMPUTER INTERFACE',
+    topicFr: 'INTERFACE CERVEAU MACHINE',
+    topicDe: 'GEHIRN-COMPUTER-SCHNITTSTELLE',
+    vocab: [
+      { en: 'Neural', fr: 'Neuronal', de: 'Neuronal', pos: 'adj', definitionEn: 'Relating to brain nerves', definitionFr: 'Relatif au système nerveux cérébral', definitionDe: 'Die Nervenbahnen des Gehirns betreffend' },
+      { en: 'Implant', fr: 'Implant', de: 'Implantat', pos: 'n', definitionEn: 'Device surgically embedded in tissue', definitionFr: 'Dispositif inséré dans le corps', definitionDe: 'Chirurgisch eingesetztes medizinisches Gerät' }
+    ],
+    promptEn: 'What biomedical breakthroughs and ethical perils arise from direct brain chips?',
+    promptFr: 'Quels espoirs médicaux et dérives éthiques suscitent les puces cérébrales ?',
+    promptDe: 'Welche medizinischen Chancen und Risiken bergen Chips im menschlichen Gehirn?'
+  },
+  {
+    id: 't4',
+    category: 'technology',
+    topicEn: 'SMART CITY GOVERNANCE',
+    topicFr: 'VILLES INTELLIGENTES',
+    topicDe: 'SMART-CITY STEUERUNG',
+    vocab: [
+      { en: 'Sensor', fr: 'Capteur', de: 'Sensor', pos: 'n', definitionEn: 'Physical data gathering unit', definitionFr: 'Dispositif de mesure de grandeurs physiques', definitionDe: 'Messfühler zur Datenerfassung' },
+      { en: 'Telemetry', fr: 'Télémétrie', de: 'Telemetrie', pos: 'n', definitionEn: 'Automated data transmission', definitionFr: 'Transmission de mesures à distance', definitionDe: 'Fernübertragung von Messdaten' }
+    ],
+    promptEn: 'Can urban traffic sensors improve bus flow without monitoring citizen movements?',
+    promptFr: 'Les capteurs urbains peuvent-ils fluidifier le trafic sans surveiller les piétons ?',
+    promptDe: 'Können Verkehrssensoren den Nahverkehr optimieren, ohne Bürger zu überwachen?'
+  },
+  {
+    id: 't5',
+    category: 'technology',
+    topicEn: 'SYNTHETIC BIOLOGY BOUNDARIES',
+    topicFr: 'BIOLOGIE DE SYNTHÈSE',
+    topicDe: 'SYNTHETISCHE BIOLOGIE GRENZEN',
+    vocab: [
+      { en: 'CRISPR', fr: 'CRISPR', de: 'CRISPR', pos: 'n', definitionEn: 'Gene editing scissor enzyme tool', definitionFr: 'Outil moléculaire d’édition génétique', definitionDe: 'Präzises Werkzeug zum Gen-Editing' },
+      { en: 'Bioethics', fr: 'Bioéthique', de: 'Bioethik', pos: 'n', definitionEn: 'Moral boundaries of biological experimentation', definitionFr: 'Réflexion morale sur les sciences du vivant', definitionDe: 'Moralische Grundsätze der Biomedizin' }
+    ],
+    promptEn: 'Where should humanity set moral guardrails when synthesizing bespoke organisms?',
+    promptFr: 'Où poser les limites morales lorsqu’on crée des organismes en laboratoire ?',
+    promptDe: 'Wo liegen die moralischen Grenzen bei der Erschaffung künstlicher Organismen?'
+  },
+  { id: 't6', category: 'technology', topicEn: 'SOLID STATE BATTERIES', topicFr: 'BATTERIES TOUT SOLIDE', topicDe: 'FESTSTOFFBATTERIE FORSCHUNG', vocab: [], promptEn: 'Why are solid electrolytes hailed as the breakthrough for long-range electric cars?', promptFr: 'En quoi les batteries à électrolyte solide révolutionneront-elles l’autonomie ?', promptDe: 'Warum gelten Feststoff-Akkus als Durchbruch für die Elektromobilität?' },
+  { id: 't7', category: 'technology', topicEn: 'CRITICAL CYBERSECURITY DEFENSE', topicFr: 'CYBERSÉCURITÉ DES INFRASTRUCTURES', topicDe: 'CYBERSICHERHEIT KRITIS', vocab: [], promptEn: 'How can municipal water and electrical plants be air-gapped from state hacker groups?', promptFr: 'Comment protéger les réseaux d’eau potable des cyberattaques étrangères ?', promptDe: 'Wie lassen sich Strom- und Wasserwerke vor staatlichen Hackerangriffen schützen?' },
+  { id: 't8', category: 'technology', topicEn: 'COMMERCIAL SPACE EXPLORATION', topicFr: 'VOLS SPATIAUX COMMERCIAUX', topicDe: 'KOMMERZIELLE RAUMFAHRT', vocab: [], promptEn: 'Has private reusable rocketry reduced launch expenses for global science satellites?', promptFr: 'Les fusées réutilisables privées ont-elles démocratisé l’accès à l’espace ?', promptDe: 'Haben wiederverwendbare Trägerraketen die Kosten für Satellitenstarts gesenkt?' },
+  { id: 't9', category: 'technology', topicEn: 'DEEPFAKE MEDIA VERIFICATION', topicFr: 'DÉTECTION DES DEEPFAKES', topicDe: 'DEEPFAKE ERKENNUNG', vocab: [], promptEn: 'Can cryptographic watermarks on news agency video cameras restore visual credibility?', promptFr: 'Les signatures cryptographiques peuvent-elles authentifier les reportages ?', promptDe: 'Können kryptografische Wasserzeichen die Glaubwürdigkeit von Videos retten?' },
+  { id: 't10', category: 'technology', topicEn: 'FUSION ENERGY EXPERIMENTS', topicFr: 'FUSION NUCLÉAIRE ÉNERGIE', topicDe: 'KERNFUSION FORSCHUNG', vocab: [], promptEn: 'Will magnetic containment reactors produce commercial grid power by mid-century?', promptFr: 'Les réacteurs de fusion produiront-ils de l’électricité propre avant 2050 ?', promptDe: 'Wird kontrollierte Kernfusion vor 2050 kommerziell Strom ins Netz speisen?' },
+  { id: 't11', category: 'technology', topicEn: 'GEOTHERMAL DRILLING ADVANCEMENTS', topicFr: 'GÉOTHERMIE PROFONDE', topicDe: 'TIEFENGEOTHERMIE TECHNIK', vocab: [], promptEn: 'Can deep horizontal drilling access unlimited zero-carbon warmth from the Earth core?', promptFr: 'Le forage profond peut-il fournir une chaleur inépuisable aux métropoles ?', promptDe: 'Kann Tiefengeothermie grundlastfähige Wärme für ganze Städte liefern?' },
+  { id: 't12', category: 'technology', topicEn: 'DRONE DELIVERY LOGISTICS', topicFr: 'LIVRAISON PAR DRONES', topicDe: 'DROHNEN LIEFERUNG LOGISTIK', vocab: [], promptEn: 'Is drone parcel drop-off realistic in dense metropolitan apartment towers?', promptFr: 'La livraison par drone est-elle viable au milieu des immeubles denses ?', promptDe: 'Ist Drohnenzustellung in dicht bebauten Innenstädten praxistauglich?' },
+  { id: 't13', category: 'technology', topicEn: 'SATELLITE INTERNET CONSTELLATIONS', topicFr: 'CONSTELLATIONS SATELLITAIRES', topicDe: 'SATELLITEN-INTERNET NETZE', vocab: [], promptEn: 'Do thousands of low-orbit internet satellites ruin observational astronomy?', promptFr: 'Les constellations de satellites en orbite basse aveuglent-elles les télescopes ?', promptDe: 'Gefährden Tausende Kleinsatelliten im erdnahen Orbit die Himmelsbeobachtung?' },
+  { id: 't14', category: 'technology', topicEn: 'EXOSKELETON WAREHOUSE GEAR', topicFr: 'EXOSQUELETTES DE TRAVAIL', topicDe: 'EXOSKELETT AM ARBEITSPLATZ', vocab: [], promptEn: 'Can motorized lifting suits reduce back injuries for warehouse parcel loaders?', promptFr: 'Les exosquelettes mécaniques protègent-ils le dos des manutentionnaires ?', promptDe: 'Können passive und aktive Exoskelette Rückenschäden bei Logistikern verhindern?' },
+  { id: 't15', category: 'technology', topicEn: 'VERTICAL FARMING AUTOMATION', topicFr: 'FERMES VERTICALES AUTOMATISÉES', topicDe: 'VERTIKALE LANDWIRTSCHAFT', vocab: [], promptEn: 'Do hydroponic salad skyscrapers consume more electricity than soil farming?', promptFr: 'Les fermes verticales consomment-elles trop d’énergie pour être rentables ?', promptDe: 'Verbraucht hydroponischer Salat im Hochhaus mehr Strom als herkömmlicher Anbau?' },
+  { id: 't16', category: 'technology', topicEn: 'MICROPLASTIC WATER FILTRATION', topicFr: 'FILTRATION DES MICROPLASTIQUES', topicDe: 'MIKROPLASTIK FILTERSYSTEME', vocab: [], promptEn: 'Can acoustic standing waves filter tiny plastic fibers out of wastewater?', promptFr: 'Des ondes acoustiques peuvent-elles piéger les fibres synthétiques dans l’eau ?', promptDe: 'Können akustische Filter winzige Kunststofffasern aus Klärwasser trennen?' },
+  { id: 't17', category: 'technology', topicEn: 'DESALINATION PLANT EFFICIENCY', topicFr: 'DÉSALINISME DE L’EAU', topicDe: 'MEERWASSERENTSALZUNG', vocab: [], promptEn: 'How can reverse osmosis plants treat seawater without dumping toxic brine back?', promptFr: 'Comment dessaler l’eau de mer sans rejeter de saumure toxique au littoral ?', promptDe: 'Wie kann Meerwasser entsalzt werden, ohne die Meere mit Salzsole zu belasten?' },
+  { id: 't18', category: 'technology', topicEn: 'AUGMENTED REALITY SURGERY', topicFr: 'CHIRURGIE ASSISTÉE AR', topicDe: 'AUGMENTED-REALITY CHIRURGIE', vocab: [], promptEn: 'Do holographic 3D patient anatomy overlays reduce complications during surgery?', promptFr: 'Les lunettes holographiques aident-elles les chirurgiens en bloc opératoire ?', promptDe: 'Verbessern holografische 3D-Ansichten die Präzision im Operationssaal?' },
+  { id: 't19', category: 'technology', topicEn: 'CARBON CAPTURE MACHINES', topicFr: 'CAPTURE DIRECTE DU CARBONE', topicDe: 'DIREKTE KOHLENSTOFFABSCHEIDUNG', vocab: [], promptEn: 'Can giant chemical fans suck enough ambient CO2 to reverse climate trends?', promptFr: 'Les aspirateurs géants de CO2 peuvent-ils inverser le réchauffement climatique ?', promptDe: 'Können riesige Filteranlagen genug CO2 aus der Umgebungsluft saugen?' },
+  { id: 't20', category: 'technology', topicEn: 'GREEN HYDROGEN PRODUCTION', topicFr: 'HYDROGÈNE VERT ÉNERGIE', topicDe: 'GRÜNER WASSERSTOFF PRODUKTION', vocab: [], promptEn: 'Can water electrolysis powered by offshore wind replace coal in steelmaking?', promptFr: 'L’électrolyse à l’éolien marin peut-elle décarboner la sidérurgie ?', promptDe: 'Kann grüner Wasserstoff aus Windkraft Kohle in der Stahlproduktion ersetzen?' },
+  { id: 't21', category: 'technology', topicEn: 'HIGH SPEED MAGLEV TRAINS', topicFr: 'TRAINS MAGLEV SUSTENTATION', topicDe: 'MAGLEV MAGNETSCHWEBEBAHN', vocab: [], promptEn: 'Can 600km/h magnetic levitation trains substitute for short continental flights?', promptFr: 'Les trains à sustentation magnétique peuvent-ils remplacer les vols intérieurs ?', promptDe: 'Können 600 km/h schnelle Magnetschwebebahnen Kurzstreckenflüge ersetzen?' },
+  { id: 't22', category: 'technology', topicEn: 'SEMICONDUCTOR FABRICATION NODES', topicFr: 'FONDERIES DE PUCES', topicDe: 'HALBLEITER HERSTELLUNG', vocab: [], promptEn: 'Why does manufacturing sub-2nm microchips require extreme ultraviolet light?', promptFr: 'Pourquoi la gravure des puces de 2nm exige-t-elle des lasers ultraviolets ?', promptDe: 'Warum erfordert die Fertigung von 2nm-Chips extreme UV-Lithografie?' },
+  { id: 't23', category: 'technology', topicEn: '3D PRINTED HOUSES', topicFr: 'MAISONS IMPRIMÉES 3D', topicDe: '3D-DRUCK HÄUSERBAU', vocab: [], promptEn: 'Can automated concrete-nozzle printers solve post-disaster shelter emergencies?', promptFr: 'Les imprimantes à béton automatisées peuvent-elles reloger les sinistrés ?', promptDe: 'Können Beton-3D-Drucker nach Katastrophen schnell Notunterkünfte schaffen?' },
+  { id: 't24', category: 'technology', topicEn: 'BEE COLONY SENSOR BOXES', topicFr: 'RUCHES CONNECTÉES', topicDe: 'BIENENSTOCK SENSORIK', vocab: [], promptEn: 'Can temperature and audio telemetry detect parasite mites in bee hives early?', promptFr: 'Des capteurs acoustiques peuvent-ils détecter les parasites dans les ruches ?', promptDe: 'Können akustische Sensoren Milbenbefall im Bienenstock frühzeitig erkennen?' },
+  { id: 't25', category: 'technology', topicEn: 'TIDAL TURBINE GENERATORS', topicFr: 'HYDROLparsed MARÉMOTRICES', topicDe: 'GEZEITENKRAFTWERKE ENERGIE', vocab: [], promptEn: 'Why is underwater ocean current predictable power still so expensive to build?', promptFr: 'Pourquoi l’énergie des courants marins peine-t-elle à percer malgré sa régularité ?', promptDe: 'Warum sind Meeresströmungskraftwerke trotz planbarem Stromertrag so teuer?' },
+  { id: 't26', category: 'technology', topicEn: 'BIOMETRIC PASSPORT GATES', topicFr: 'PORTIQUES BIOMÉTRIQUES', topicDe: 'BIOMETRISCHE PASSKONTROLLE', vocab: [], promptEn: 'Do automatic facial scan airport gates speed lines or create surveillance databases?', promptFr: 'Les portiques à reconnaissance faciale fluidifient-ils les files d’aéroports ?', promptDe: 'Beschleunigt automatischer Gesichtsscan die Grenzkontrolle oder schafft er Risiken?' },
+  { id: 't27', category: 'technology', topicEn: 'LAB GROWN MEAT BIOREACTORS', topicFr: 'VIANDE DE CULTURE', topicDe: 'IN-VITRO FLEISCH BIOREAKTOR', vocab: [], promptEn: 'Can cultivated muscle cells replace livestock farming without massive electricity costs?', promptFr: 'La viande cultivée en cuve peut-elle remplacer l’élevage sans gouffre énergétique ?', promptDe: 'Kann Laborfleisch die Nutztierhaltung ablösen, ohne extrem viel Strom zu fressen?' },
+  { id: 't28', category: 'technology', topicEn: 'SPACE DEBRIS LASER BROOMS', topicFr: 'DÉBRIS SPATIAUX LASERS', topicDe: 'WELTRAUMSCHROTT LASER', vocab: [], promptEn: 'How can ground lasers gently deorbit thousands of dangerous metal rocket fragments?', promptFr: 'Des lasers terrestres peuvent-ils freiner les épaves en orbite pour les détruire ?', promptDe: 'Können Laser gefährlichen Schrott im Erdorbit kontrolliert zum Verglühen bringen?' },
+  { id: 't29', category: 'technology', topicEn: 'PASSIVE DAYLIGHT COOLING', topicFr: 'REFROIDISSEMENT RADIATIF', topicDe: 'PASSIVE STRAHLUNGSKÜHLUNG', vocab: [], promptEn: 'Can specialized polymer paint radiate heat to deep space without electricity?', promptFr: 'Une peinture spéciale peut-elle refroidir un toit sans climatiseur électrique ?', promptDe: 'Können Spezialfarben Gebäude durch Strahlung ins All ohne Strom kühlen?' },
+  { id: 't30', category: 'technology', topicEn: 'AUTONOMOUS WEEDING ROBOTS', topicFr: 'ROBOTS DE DÉSHERBAGE', topicDe: 'AUTONOME JÄTROBOTER', vocab: [], promptEn: 'Can laser-zapping farm robots eliminate chemical herbicide spraying on crops?', promptFr: 'Les robots agricoles au laser peuvent-ils éradiquer les pesticides chimiques ?', promptDe: 'Können lasergestützte Feldroboter chemische Unkrautvernichter überflüssig machen?' },
+  { id: 't31', category: 'technology', topicEn: 'UNDERSEA FIBRE OPTIC CABLES', topicFr: 'CÂBLES SOUS-MARINS', topicDe: 'UNTERSEE-GLASFASERKABEL', vocab: [], promptEn: 'How vulnerable is international internet traffic to deep ocean submarine sabotage?', promptFr: 'À quel point les câbles de fibre sous-marins sont-ils vulnérables au sabotage ?', promptDe: 'Wie verwundbar ist das weltweite Internet gegen Sabotage an Tiefseekabeln?' },
+  { id: 't32', category: 'technology', topicEn: 'BIO-COMPATIBLE SUTURE SILK', topicFr: 'FILS CHIRURGICAUX BIO', topicDe: 'BIOKOMPATIBEL NAHTMATERIAL', vocab: [], promptEn: 'Can bioengineered spider silk dissolve naturally inside healing incisions?', promptFr: 'La soie d’araignée synthétique peut-elle se résorber sans cicatrice interne ?', promptDe: 'Können künstliche Spinnenseidenfäden innere Wunden nahtlos verschließen?' },
+  { id: 't33', category: 'technology', topicEn: 'RECYCLED PLASTIC ASPHALT', topicFr: 'ASPHALTE AU PLASTIQUE', topicDe: 'KUNSTSTOFF-ASPHALT STRASSEN', vocab: [], promptEn: 'Does melting waste plastic bottles into road tar reduce pothole cracks?', promptFr: 'Incorporer des granulés de plastique dans le goudron rend-il les routes plus solides ?', promptDe: 'Verlängert recycelter Kunststoff im Asphalt die Lebensdauer von Straßen?' },
+  { id: 't34', category: 'technology', topicEn: 'SOLAR POWERED DRINKING WATER', topicFr: 'EAU POTABLE SOLAIRE', topicDe: 'SOLAR-TRINKWASSERAUFBEREITUNG', vocab: [], promptEn: 'Can solar panels condense drinking water straight out of arid desert air?', promptFr: 'Des panneaux solaires peuvent-ils extraire de l’eau potable de l’air du désert ?', promptDe: 'Können Solaranlagen Trinkwasser direkt aus trockener Wüstenluft gewinnen?' },
+  { id: 't35', category: 'technology', topicEn: 'WIND TURBINE BLADE RECYCLING', topicFr: 'RECYCLAGE DES PALES', topicDe: 'WINDGELENKE RECYCLING', vocab: [], promptEn: 'How can fiberglass turbine blades be reused instead of buried in dumps?', promptFr: 'Comment valoriser les pales d’éoliennes au lieu de les enfouir en décharge ?', promptDe: 'Wie lassen sich Rotorblätter aus Glasfaser recyceln statt deponieren?' },
+  { id: 't36', category: 'technology', topicEn: 'SMART POWER GRID STORAGE', topicFr: 'STOCKAGE SUR RÉSEAU', topicDe: 'INTELLIGENTE NETZSPEICHER', vocab: [], promptEn: 'Can millions of parked electric car batteries feed power back during night peaks?', promptFr: 'Les batteries des voitures branchées peuvent-elles stabiliser le réseau le soir ?', promptDe: 'Können geparkte E-Autos als Pufferbatterien das Stromnetz stabilisieren?' },
+  { id: 't37', category: 'technology', topicEn: 'OPTICAL COMPUTING CHIPS', topicFr: 'PUCES OPTIQUES', topicDe: 'OPTISCHE COMPUTERCHIPS', vocab: [], promptEn: 'Can photons replace electrons inside processors to eliminate heat bottlenecks?', promptFr: 'Faire circuler des photons plutôt que des électrons supprime-t-il la surchauffe ?', promptDe: 'Können Lichtteilchen Elektronen in Chips ersetzen, um Hitze zu vermeiden?' },
+  { id: 't38', category: 'technology', topicEn: 'AUTONOMOUS CARGO SHIPS', topicFr: 'CARGOS AUTONOMES', topicDe: 'AUTONOME FRACHTSCHIFFE', vocab: [], promptEn: 'Can crewless container vessels navigate storms safely via remote satellite supervision?', promptFr: 'Des porte-conteneurs sans équipage peuvent-ils naviguer en haute mer en sécurité ?', promptDe: 'Können fahrerlose Frachtschiffe per Satellitenüberwachung sicher navigieren?' },
+  { id: 't39', category: 'technology', topicEn: 'WEARABLE SWEAT GLUCOSE MONITORS', topicFr: 'CAPTEURS DE SUEUR', topicDe: 'SCHWEISS GLUKOSE SENSOREN', vocab: [], promptEn: 'Can continuous skin patches track blood sugar without needle finger pricks?', promptFr: 'Des patchs cutanés peuvent-ils mesurer le glucose sans aucune piqûre d’aiguille ?', promptDe: 'Können Schweißsensoren den Blutzucker schmerzfrei ohne Stechen messen?' },
+  { id: 't40', category: 'technology', topicEn: 'PEROVSKITE SOLAR TANDEM CELLS', topicFr: 'CELLULES PÉROVSKITE SOLAIRE', topicDe: 'PEROWSKIT SOLARZELLEN', vocab: [], promptEn: 'Can layering perovskite crystals over silicon smash the 30% solar efficiency barrier?', promptFr: 'Associer pérovskite et silicium permettra-t-il de dépasser 30% de rendement ?', promptDe: 'Kann die Kombination von Perowskit und Silizium 30% Wirkungsgrad knacken?' },
+  { id: 't41', category: 'technology', topicEn: 'INDUSTRIAL ROBOT ARMS PRECISION', topicFr: 'BRAS ROBOTIQUES PRÉCIS', topicDe: 'INDUSTRIEROBOTER PRÄZISION', vocab: [], promptEn: 'How has micro-millimeter robotic arm feedback revolutionized car body welding?', promptFr: 'Comment la précision submillimétrique des robots a-t-elle transformé l’automobile ?', promptDe: 'Wie revolutionierte mikrometergenaue Roboterführung den Karosseriebau?' },
+  { id: 't42', category: 'technology', topicEn: 'SUPERCONDUCTING POWER CABLES', topicFr: 'CÂBLES SUPRACONDUCTEURS', topicDe: 'SUPRALEITENDE STROMKABEL', vocab: [], promptEn: 'Can zero-resistance chilled cables transmit electricity over thousands of miles?', promptFr: 'Des câbles supraconducteurs peuvent-ils transporter l’énergie sans aucune perte ?', promptDe: 'Können Supraleiterkabel Strom über Tausende Kilometer verlustfrei leiten?' },
+  { id: 't43', category: 'technology', topicEn: 'METHANE LEAK DETECTING SATELLITES', topicFr: 'SATELLITES ANTI-MÉTHANE', topicDe: 'METHANLECK-SATELLITEN', vocab: [], promptEn: 'How do hyperspectral orbital cameras identify invisible gas pipeline leaks from space?', promptFr: 'Comment les caméras spectrales orbitales traquent-elles les fuites de gaz invisibles ?', promptDe: 'Wie orten Satellitenkameras unsichtbare Erdgaslecks aus dem Weltall?' },
+  { id: 't44', category: 'technology', topicEn: 'SOUND ABSORBING METAMATERIALS', topicFr: 'MÉTAMATÉRIAUX ACOUSTIQUES', topicDe: 'SCHALLSCHUTZ METAMATERIALIEN', vocab: [], promptEn: 'Can sub-centimeter cellular panels cancel out deafening highway traffic roar?', promptFr: 'De fines cloisons alvéolaires peuvent-elles bloquer le grondement des autoroutes ?', promptDe: 'Können hauchdünne Paneele den Lärm von Autobahnen wirksam schlucken?' },
+  { id: 't45', category: 'technology', topicEn: 'ELECTRONIC NOSE SENSOR PROBES', topicFr: 'NEZ ÉLECTRONIQUE MÉDICAL', topicDe: 'ELEKTRONISCHE NASE SENSOREN', vocab: [], promptEn: 'Can breath odor sensor arrays detect lung tumors years before medical scans?', promptFr: 'Des capteurs d’haleine peuvent-ils déceler des tumeurs avant la radiographie ?', promptDe: 'Können Geruchssensoren Lungenkrebs im Atem vor dem Röntgenbild erkennen?' },
+  { id: 't46', category: 'technology', topicEn: 'SUBMERSIBLE CORAL SEEDING BOT', topicFr: 'ROBOTS PLANTEURS DE CORAIL', topicDe: 'KORALLEN-PFLANZ ROBOTER', vocab: [], promptEn: 'Can small aquatic robots anchor heat-resistant coral fragments onto bleached reefs?', promptFr: 'Des drones sous-marins peuvent-ils replanter des coraux résistants à la chaleur ?', promptDe: 'Können Unterwasserdrohnen hitzebeständige Korallen auf Riffen pflanzen?' },
+  { id: 't47', category: 'technology', topicEn: 'SODIUM ION VEHICLE BATTERIES', topicFr: 'BATTERIES SODIUM-ION', topicDe: 'NATRIUM-IONEN AKKUS', vocab: [], promptEn: 'Will cheap table salt sodium replace scarce lithium and cobalt in economy cars?', promptFr: 'Le sel de table remplacera-t-il le lithium coûteux dans les citadines ?', promptDe: 'Wird günstiges Natrium knappes Lithium in kompakten E-Autos ablösen?' },
+  { id: 't48', category: 'technology', topicEn: 'BIOLUMINESCENT HIGHWAY TREES', topicFr: 'ARBRES BIOLUMINESCENTS', topicDe: 'LEUCHTENDE STRASSENBÄUME', vocab: [], promptEn: 'Can genetically glowing foliage illuminate nighttime bike paths without streetlights?', promptFr: 'Des arbustes lumineux peuvent-ils éclairer les pistes cyclables sans lampadaires ?', promptDe: 'Können selbstleuchtende Pflanzen nächtliche Radwege ohne Laternen erhellen?' },
+  { id: 't49', category: 'technology', topicEn: 'ZERO EMISSION AMMONIA CARGO', topicFr: 'CARGOS À L’AMMONIAC', topicDe: 'AMMONIAK-FRACHTER MOTOR', vocab: [], promptEn: 'Is green ammonia fuel the realistic zero-carbon answer for global cargo ships?', promptFr: 'L’ammoniac vert est-il la vraie solution pour décarboner le fret maritime ?', promptDe: 'Ist grünes Ammoniak die Lösung für emissionsfreie Containerschiffe?' },
+  { id: 't50', category: 'technology', topicEn: 'SMART IRRIGATION DRIP VALVES', topicFr: 'IRRIGATION AU GOUTTE-À-GOUTTE', topicDe: 'SMARTE TRÖPFCHENBEWÄSSERUNG', vocab: [], promptEn: 'Can soil moisture probes cut agricultural water wastage by over 60 percent?', promptFr: 'Des capteurs d’humidité du sol peuvent-ils économiser 60% de l’eau agricole ?', promptDe: 'Können Bodenfeuchte-Sensoren mehr als 60 Prozent Bewässerungswasser sparen?' },
+];
+
+// 50 Arts & Design topics (a1 - a50)
+const ARTS_TOPICS: TopicItem[] = [
+  {
+    id: 'a1',
+    category: 'arts',
+    topicEn: 'MINIMALIST DESIGN PHILOSOPHY',
+    topicFr: 'DESIGN MINIMALISTE',
+    topicDe: 'MINIMALISTISCHES DESIGN',
+    vocab: [
+      { en: 'Superfluous', fr: 'Superflu', de: 'Überflüssig', pos: 'adj', definitionEn: 'Beyond what is needed', definitionFr: 'Qui n’est pas strictement nécessaire', definitionDe: 'Nicht zwingend erforderlich' },
+      { en: 'Essentialism', fr: 'Essentialisme', de: 'Essentialismus', pos: 'n', definitionEn: 'Focus on pure fundamentals', definitionFr: 'Concentration sur l’essence même', definitionDe: 'Konzentration auf das Wesentliche' }
+    ],
+    promptEn: 'Does radical minimalism create serene functional spaces or cold sterile environments?',
+    promptFr: 'Le minimalisme radical crée-t-il la sérénité ou une froideur stérile ?',
+    promptDe: 'Schafft radikaler Minimalismus Ruhe oder kalte, sterile Räume?'
+  },
+  {
+    id: 'a2',
+    category: 'arts',
+    topicEn: 'SUSTAINABLE ARCHITECTURE PRINCIPLES',
+    topicFr: 'ARCHITECTURE DURABLE',
+    topicDe: 'NACHHALTIGE ARCHITEKTUR',
+    vocab: [
+      { en: 'Passive solar', fr: 'Solaire passif', de: 'Passivhaus-Design', pos: 'adj', definitionEn: 'Heating via building orientation', definitionFr: 'Chauffage naturel par orientation de la façade', definitionDe: 'Heizung allein durch Gebäudeausrichtung' },
+      { en: 'Timber', fr: 'Bois d’œuvre', de: 'Bauholz', pos: 'n', definitionEn: 'Wood prepared for construction', definitionFr: 'Bois utilisé pour la charpente', definitionDe: 'Für Bauzwecke verarbeitetes Holz' }
+    ],
+    promptEn: 'Can high-rise buildings made of cross-laminated timber replace steel and concrete?',
+    promptFr: 'Les gratte-ciels en bois lamellé-croisé peuvent-ils remplacer le béton armé ?',
+    promptDe: 'Können Hochhäuser aus Holz Stahl und Beton im Städtebau ablösen?'
+  },
+  {
+    id: 'a3',
+    category: 'arts',
+    topicEn: 'PUBLIC SCULPTURE DYNAMICS',
+    topicFr: 'SCULPTURE PUBLIQUE',
+    topicDe: 'SKULPTUREN IM STADTRAUM',
+    vocab: [
+      { en: 'Site-specific', fr: 'In situ', de: 'Ortsspezifisch', pos: 'adj', definitionEn: 'Created strictly for one location', definitionFr: 'Conçu sur mesure pour un lieu précis', definitionDe: 'Genau für einen bestimmten Ort geschaffen' },
+      { en: 'Monument', fr: 'Monument', de: 'Denkmal', pos: 'n', definitionEn: 'Commemorative public artistic structure', definitionFr: 'Édifice érigé en mémoire d’un fait', definitionDe: 'Gedenkbauwerk im öffentlichen Raum' }
+    ],
+    promptEn: 'Should public monuments be selected by elite juries or neighborhood ballot votes?',
+    promptFr: 'Les statues de place publique doivent-elles être votées par les riverains ?',
+    promptDe: 'Sollten Denkmäler durch Anwohnerabstimmung oder Fachjurys gewählt werden?'
+  },
+  {
+    id: 'a4',
+    category: 'arts',
+    topicEn: 'URBAN STREET MURALS',
+    topicFr: 'FRESQUES MURALES URBAINES',
+    topicDe: 'URBANE WANDGEMÄLDE',
+    vocab: [
+      { en: 'Graffiti', fr: 'Graffiti', de: 'Graffiti', pos: 'n', definitionEn: 'Markings sprayed in public spaces', definitionFr: 'Inscriptions ou dessins peints sur les murs', definitionDe: 'Gesprühte Bilder im Straßenraum' },
+      { en: 'Beautification', fr: 'Embellissement', de: 'Stadtbild-Verschönerung', pos: 'n', definitionEn: 'Aesthetic enhancement of spaces', definitionFr: 'Action d’améliorer l’aspect visuel', definitionDe: 'Optische Aufwertung des Wohnumfelds' }
+    ],
+    promptEn: 'At what point does illegal spray-painted tagging transform into acclaimed public art?',
+    promptFr: 'À quel instant un tag sauvage devient-il une œuvre d’art reconnue ?',
+    promptDe: 'Ab wann wird illegales Graffiti zur anerkannten Straßenkunst?'
+  },
+  {
+    id: 'a5',
+    category: 'arts',
+    topicEn: 'MUSEUM SPATIAL EXPERIENCE',
+    topicFr: 'SCÉNOGRAPHIE DE MUSÉE',
+    topicDe: 'MUSEUMSRAUM ARCHITEKTUR',
+    vocab: [
+      { en: 'Curatorial', fr: 'Curatorial', de: 'Kuratorisch', pos: 'adj', definitionEn: 'Relating to exhibition design', definitionFr: 'Relatif au travail du commissaire d’exposition', definitionDe: 'Die Ausstellungskonzeption betreffend' },
+      { en: 'Acoustics', fr: 'Acoustique', de: 'Raumakustik', pos: 'n', definitionEn: 'Sound qualities of an interior', definitionFr: 'Qualités sonores d’une pièce', definitionDe: 'Klangliche Eigenschaften eines Saals' }
+    ],
+    promptEn: 'Does museum architecture ever overpower the quiet paintings hanging on its gallery walls?',
+    promptFr: 'L’architecture spectaculaire d’un musée peut-elle éclipser les toiles exposées ?',
+    promptDe: 'Stellt spektakuläre Museumsarchitektur die ausgestellte Kunst in den Schatten?'
+  },
+  { id: 'a6', category: 'arts', topicEn: 'SLOW FASHION TEXTILES', topicFr: 'MODE ÉTHIQUE DURABLE', topicDe: 'SLOW-FASHION BEWEGUNG', vocab: [], promptEn: 'Can durable bespoke linen clothing compete against disposable ultra-fast retail?', promptFr: 'La confection artisanale en lin peut-elle rivaliser avec la fast-fashion ?', promptDe: 'Kann langlebige Leinenkleidung gegen billige Wegwerfmode bestehen?' },
+  { id: 'a7', category: 'arts', topicEn: 'EDITORIAL TYPOGRAPHY CRAFT', topicFr: 'TYPOGRAPHIE ÉDITORIALE', topicDe: 'TYPOGRAFIE GESTALTUNG', vocab: [], promptEn: 'How does letter spacing and serif choice alter readers’ unconscious trust in printed news?', promptFr: 'Le choix de la police de caractères influence-t-il la crédibilité d’un journal ?', promptDe: 'Wie beeinflussen Schriftart und Zeilenabstand das Vertrauen in Nachrichten?' },
+  { id: 'a8', category: 'arts', topicEn: 'EXPERIMENTAL CINEMA NARRATIVES', topicFr: 'CINÉMA EXPÉRIMENTAL', topicDe: 'EXPERIMENTALFILM FORM', vocab: [], promptEn: 'Why do non-linear, fragmented art movies challenge commercial film audiences?', promptFr: 'Pourquoi les films sans intrigue classique déroutent-ils tant le grand public ?', promptDe: 'Warum fordern nichtlineare Kunstfilme herkömmliche Sehgewohnheiten heraus?' },
+  { id: 'a9', category: 'arts', topicEn: 'BIOPHILIC INTERIOR DESIGN', topicFr: 'DESIGN BIOPHILIQUE', topicDe: 'BIOPHILES INNENDESIGN', vocab: [], promptEn: 'Does filling open plan offices with real foliage measurably lower cortisol levels?', promptFr: 'Intégrer des murs végétaux au bureau réduit-il réellement le stress ?', promptDe: 'Senken lebende Pflanzenwände im Großraumbüro nachweisbar den Stresspegel?' },
+  { id: 'a10', category: 'arts', topicEn: 'CERAMIC MODERNIST POTTERY', topicFr: 'CÉRAMIQUE CONTEMPORAINE', topicDe: 'MODERNE KERAMIKKUNST', vocab: [], promptEn: 'Why are stoneware clay vases experiencing a massive revival among younger designers?', promptFr: 'Pourquoi la poterie en grès connaît-elle un engouement inédit chez les jeunes ?', promptDe: 'Warum erlebt handgetöpferte Keramik ein enormes Comeback bei jungen Designern?' },
+  { id: 'a11', category: 'arts', topicEn: 'ACOUSTIC CONCERT HALLS', topicFr: 'ACOUSTIQUE DES SALLES', topicDe: 'KONZERTSAAL AKUSTIK', vocab: [], promptEn: 'Why is natural timber still superior to electronics in classical symphony hall acoustics?', promptFr: 'Pourquoi le bois brut surpasse-t-il les micros pour l’acoustique des orchestres ?', promptDe: 'Warum übertrifft Echtholz Mikrofone bei der Akustik klassischer Konzertsäle?' },
+  { id: 'a12', category: 'arts', topicEn: 'DOCUMENTARY PHOTOGRAPHY TRUTH', topicFr: 'PHOTOGRAPHIE DOCUMENTAIRE', topicDe: 'DOKUMENTARFOTOGRAFIE', vocab: [], promptEn: 'Can an edited documentary still photo ever present unmediated objective reality?', promptFr: 'Une photo de presse retouchée peut-elle refléter la vérité brute ?', promptDe: 'Kann ein bearbeitetes Pressefoto jemals objektive Realität abbilden?' },
+  { id: 'a13', category: 'arts', topicEn: 'FURNITURE ERGONOMIC REVOLUTION', topicFr: 'ERGONOMIE DU MOBILIER', topicDe: 'ERGONOMISCHE MÖBEL', vocab: [], promptEn: 'How has the sedentary office desk evolved to protect modern lumbar posture?', promptFr: 'Comment le fauteuil de bureau s’est-il réinventé pour sauver notre dos ?', promptDe: 'Wie haben ergonomische Schreibtischstühle unsere Sitzhaltung revolutioniert?' },
+  { id: 'a14', category: 'arts', topicEn: 'LIGHTING ATMOSPHERE DESIGN', topicFr: 'DESIGN DE LA LUMIÈRE', topicDe: 'LICHTGESTALTUNG ARCHITEKTUR', vocab: [], promptEn: 'Does warm indirect lamp lighting transform public hospital wards into healing spaces?', promptFr: 'Un éclairage indirect et chaud accélère-t-il le rétablissement à l’hôpital ?', promptDe: 'Verwandelt warmes, indirektes Licht sterile Klinikflure in Wohlfühlräume?' },
+  { id: 'a15', category: 'arts', topicEn: 'WOODBLOCK PRINT REVIVAL', topicFr: 'GRAVURE SUR BOIS', topicDe: 'HOLZSCHNITT DRUCKKUNST', vocab: [], promptEn: 'What tactile qualities does hand-carved relief printing possess over inkjet printers?', promptFr: 'Quelle émotion tactile la gravure sur bois apporte-t-elle face à l’imprimante ?', promptDe: 'Welche haptische Tiefe bietet der Holzschnitt gegenüber Digitaldrucken?' },
+  { id: 'a16', category: 'arts', topicEn: 'THEATRE SET SCENOGRAPHY', topicFr: 'SCÉNOGRAPHIE DE THÉÂTRE', topicDe: 'BÜHNENBILD SCENOGRAFIE', vocab: [], promptEn: 'Can an empty stage with a single beam of light convey more tragedy than lavish sets?', promptFr: 'Un plateau nu éclairé d’un seul faisceau peut-il émouvoir plus qu’un décor lourd ?', promptDe: 'Kann eine kahle Bühne mit einem Lichtstrahl mehr berühren als Prunkkulissen?' },
+  { id: 'a17', category: 'arts', topicEn: 'KINETIC WIND SCULPTURES', topicFr: 'SCULPTURES CINÉTIQUES', topicDe: 'KINETISCHE SKULPTUREN', vocab: [], promptEn: 'How do balanced metal sculptures turn coastal sea breezes into hypnotic dance?', promptFr: 'Comment des mobiles en acier transforment-ils le vent marin en chorégraphie ?', promptDe: 'Wie verwandeln austarierte Metallskulpturen Wind in hypnotische Bewegung?' },
+  { id: 'a18', category: 'arts', topicEn: 'GRAPHIC POSTER PROPAGANDA', topicFr: 'L’AFFICHE ENGAGÉE', topicDe: 'PLAKATKUNST POLITISCH', vocab: [], promptEn: 'Can high-contrast screenprint posters still spark civil demonstrations in cities?', promptFr: 'L’affiche sérigraphiée coup-de-poing peut-elle encore mobiliser la rue ?', promptDe: 'Können handgedruckte Plakate heute noch gesellschaftlichen Protest entfachen?' },
+  { id: 'a19', category: 'arts', topicEn: 'LAND ART EARTHWORKS', topicFr: 'LAND ART MONUMENTAL', topicDe: 'LAND-ART NATURKUNST', vocab: [], promptEn: 'Should environmental stone carvings be left to erode naturally back into landscapes?', promptFr: 'Faut-il laisser les œuvres de Land Art s’éroder sous la pluie et le vent ?', promptDe: 'Sollte Naturkunst im Freien unberührt der Verwitterung überlassen werden?' },
+  { id: 'a20', category: 'arts', topicEn: 'BOOKBINDING LEATHER CRAFT', topicFr: 'RELIURE D’ART', topicDe: 'BUCHBINDEREI HANDWERK', vocab: [], promptEn: 'Why do bibliophiles still pay thousands for hand-sewn leather spine volumes?', promptFr: 'Pourquoi collectionne-t-on encore des reliures cousues main en cuir noble ?', promptDe: 'Warum zahlen Sammler Tausende Euro für handgebundene Ledereinbände?' },
+  { id: 'a21', category: 'arts', topicEn: 'STAINED GLASS MODERNISM', topicFr: 'VITRAIL CONTEMPORAIN', topicDe: 'MODERNE GLASKUNST', vocab: [], promptEn: 'How did painters like Chagall and Richter reinvent medieval church colored glass?', promptFr: 'Comment des peintres modernes ont-ils métamorphosé le vitrail d’église ?', promptDe: 'Wie erfanden moderne Künstler die sakrale Glaskunst neu?' },
+  { id: 'a22', category: 'arts', topicEn: 'BRUTALIST CONCRETE BEAUTY', topicFr: 'ESTHÉTIQUE DU BÉTON', topicDe: 'BRUTALISMUS ÄSTHETIK', vocab: [], promptEn: 'Why is raw textured concrete architecture fiercely defended by heritage lovers?', promptFr: 'Pourquoi le brutalisme en béton suscite-t-il un tel culte chez les puristes ?', promptDe: 'Warum verteidigen Denkmalpfleger rohe Sichtbeton-Bauten so leidenschaftlich?' },
+  { id: 'a23', category: 'arts', topicEn: 'JEWELLERY METAL SMITHING', topicFr: 'JOAILLERIE ARTISANALE', topicDe: 'GOLDSCHMIEDE KUNST', vocab: [], promptEn: 'Can recycled ocean gold and ethical gems replace strip-mined diamonds?', promptFr: 'L’or recyclé et les pierres éthiques peuvent-ils détrôner les mines de diamant ?', promptDe: 'Können Recycling-Gold und Labor-Edelsteine Schürf-Diamanten verdrängen?' },
+  { id: 'a24', category: 'arts', topicEn: 'PUBLIC BENCH ERGONOMICS', topicFr: 'BANCS PUBLICS URBAINS', topicDe: 'SITZMÖBEL IM FREIEN', vocab: [], promptEn: 'Why is anti-homeless defensive city architecture drawing severe moral backlash?', promptFr: 'Pourquoi le mobilier urbain hostile aux sans-abris choque-t-il l’opinion ?', promptDe: 'Warum stößt defensive Stadtarchitektur gegen Wohnungslose auf Kritik?' },
+  { id: 'a25', category: 'arts', topicEn: 'TEXTILE TAPESTRY REVIVAL', topicFr: 'TENTURES ET TAPISSERIES', topicDe: 'WANDTEPPICH KUNST', vocab: [], promptEn: 'Why are contemporary galleries commissioning massive wool tapestries again?', promptFr: 'Pourquoi les galeries d’art exposent-elles à nouveau des tapisseries en laine ?', promptDe: 'Warum erleben großformatige Wolltapisserien in Galerien ein Comeback?' },
+  { id: 'a26', category: 'arts', topicEn: 'CHOREOGRAPHY BODY LANGUAGE', topicFr: 'CHORÉGRAPHIE CONTEMPORAINE', topicDe: 'ZEITGENÖSSISCHER TANZ', vocab: [], promptEn: 'Can wordless dance performances convey human grief more intensely than drama?', promptFr: 'Le mouvement du corps muet exprime-t-il le deuil avec plus de force que le texte ?', promptDe: 'Drückt wortloser Tanz Schmerz unmittelbarer aus als gesprochenes Drama?' },
+  { id: 'a27', category: 'arts', topicEn: 'ICONIC ALBUM COVER ART', topicFr: 'POCHETTES DE VINYLE', topicDe: 'SCHALLPLATTEN COVERKUNST', vocab: [], promptEn: 'How did 12-inch vinyl album jackets define visual youth rebellion in the 70s?', promptFr: 'Comment les pochettes de disques 33-tours ont-elles façonné la pop-culture ?', promptDe: 'Wie prägten quadratische Vinyl-Cover die Popkultur ganzer Generationen?' },
+  { id: 'a28', category: 'arts', topicEn: 'WATERCOLOUR TRANSPARENCY LIGHT', topicFr: 'AQUARELLE ET LUMIÈRE', topicDe: 'AQUARELLMALEREI LICHT', vocab: [], promptEn: 'Why is mastering rapid watercolor wash brushstrokes considered so difficult?', promptFr: 'Pourquoi la technique de l’aquarelle humide exige-t-elle tant de maîtrise ?', promptDe: 'Warum gilt der schnelle, nasse Aquarellpinselstrich als Königsdisziplin?' },
+  { id: 'a29', category: 'arts', topicEn: 'RESTORATION OF OIL PAINTINGS', topicFr: 'RESTAURATION DE TOILES', topicDe: 'GEMÄLDE RESTAURIERUNG', vocab: [], promptEn: 'Should cracked yellow varnish be removed from Old Masters or kept as age patina?', promptFr: 'Faut-il ôter les vieux vernis jaunis des chefs-d’œuvre au risque de choquer ?', promptDe: 'Sollte vergilbter Firnis von alten Meisterwerken entfernt werden?' },
+  { id: 'a30', category: 'arts', topicEn: 'WAYFINDING SIGNAGE DESIGN', topicFr: 'SIGNALÉTIQUE URBAINE', topicDe: 'LEITSYSTEME GESTALTUNG', vocab: [], promptEn: 'How do airport symbols allow travelers from all tongues to find transit gates?', promptFr: 'Comment des pictogrammes permettent-ils à tous de s’orienter sans un mot ?', promptDe: 'Wie ermöglichen Piktogramme weltweites Zurechtfinden ohne Sprachbarriere?' },
+  { id: 'a31', category: 'arts', topicEn: 'PORTRAIT OIL PAINTING', topicFr: 'PORTRAIT À L’HUILE', topicDe: 'PORTRÄTMALEREI TRADITION', vocab: [], promptEn: 'What inner human psychology does a painted brush portrait reveal over selfies?', promptFr: 'Que révèle un portrait peint que l’appareil photo ne saisit jamais ?', promptDe: 'Welche seelische Tiefe offenbart ein Ölbild, die kein Foto einfangen kann?' },
+  { id: 'a32', category: 'arts', topicEn: 'FOUNTAIN WATER ARCHITECTURE', topicFr: 'FONTAINES PUBLIQUES', topicDe: 'WASSERSPIELE ARCHITEKTUR', vocab: [], promptEn: 'How does running fountain water alter thermal microclimates in stone plazas?', promptFr: 'Comment le bruit et la fraîcheur d’une fontaine transforment-ils une place ?', promptDe: 'Wie kühlt das Plätschern historischer Brunnen steinerne Stadtplätze?' },
+  { id: 'a33', category: 'arts', topicEn: 'COLLAGE CUTOUT TECHNIQUES', topicFr: 'ART DU COLLAGE', topicDe: 'COLLAGE KUNSTFORM', vocab: [], promptEn: 'Did Dadaist photo montages invent modern fragmented visual culture?', promptFr: 'Les photomontages dadaïstes ont-ils inventé notre regard moderne ?', promptDe: 'Haben dadaistische Papierschnitte unsere moderne Bildsprache begründet?' },
+  { id: 'a34', category: 'arts', topicEn: 'PAPER MAKING CRAFTSMANSHIP', topicFr: 'PAPIER FAIT MAIN', topicDe: 'HANDGESCHÖPFTES PAPIER', vocab: [], promptEn: 'Why does textured handmade rag paper command such reverence among artists?', promptFr: 'Pourquoi le papier chiffon fait main est-il si vénéré des artistes ?', promptDe: 'Warum schätzen Künstler handgeschöpftes Büttenpapier bis heute so sehr?' },
+  { id: 'a35', category: 'arts', topicEn: 'CLOISTER GARDEN GEOMETRY', topicFr: 'JARDINS DE CLOÎTRES', topicDe: 'KLOSTERGÄRTEN GEOMETRIE', vocab: [], promptEn: 'How does symmetrical quadripartite garden geometry induce contemplative calm?', promptFr: 'Pourquoi la géométrie en croix des cloîtres apaise-t-elle l’esprit ?', promptDe: 'Warum erzeugt die vierteilige Symmetrie von Klostergärten innere Ruhe?' },
+  { id: 'a36', category: 'arts', topicEn: 'INDUSTRIAL PRODUCT PACKAGING', topicFr: 'DESIGN D’EMBALLAGE', topicDe: 'VERPACKUNGSDESIGN KUNST', vocab: [], promptEn: 'Can unboxing an electronic device generate emotional anticipation like art?', promptFr: 'L’ouverture d’un coffret d’objet peut-elle susciter une émotion quasi artistique ?', promptDe: 'Kann das Auspacken eines Produkts ein echtes ästhetisches Erlebnis sein?' },
+  { id: 'a37', category: 'arts', topicEn: 'BICYCLE FRAME BRAZING', topicFr: 'CADRES DE VÉLO ARTISANAUX', topicDe: 'FAHRRADRAHMENBAU KUNST', vocab: [], promptEn: 'Why do connoisseurs prefer hand-brazed steel bicycle frames over carbon fiber?', promptFr: 'Pourquoi les puristes préfèrent-ils un cadre vélo en acier soudo-brasé ?', promptDe: 'Warum schwören Liebhaber auf handgelötete Stahlrahmen statt Carbon?' },
+  { id: 'a38', category: 'arts', topicEn: 'MINIATURE BOOK DESIGN', topicFr: 'LIVRES MINIATURES', topicDe: 'MINIATURBÜCHER KUNST', vocab: [], promptEn: 'How did Renaissance printers manage to print legible bibles on two-inch pages?', promptFr: 'Comment imprimait-on des textes lisibles sur des pages de trois centimètres ?', promptDe: 'Wie druckten frühe Meister lesbare Schriften im Daumenformat?' },
+  { id: 'a39', category: 'arts', topicEn: 'GLASS BLOWING MASTERY', topicFr: 'SOUFFLAGE DU VERRE', topicDe: 'GLASBLÄSER KUNST', vocab: [], promptEn: 'How does shaping molten glass at 1000 degrees test instantaneous hand reflexes?', promptFr: 'Pourquoi façonner le verre en fusion exige-t-il des réflexes sans faille ?', promptDe: 'Warum verlangt das Formen glühenden Glases blitzschnelle Reaktionen?' },
+  { id: 'a40', category: 'arts', topicEn: 'THEATRICAL PUPPETRY DESIGN', topicFr: 'MARIONNETTES DE SCÈNE', topicDe: 'FIGURENTHEATER BAU', vocab: [], promptEn: 'Why do wooden puppet joints evoke instant human empathy from audiences?', promptFr: 'Pourquoi une marionnette de bois émeut-elle instantanément la salle ?', promptDe: 'Warum wecken geschnitzte Theaterpuppen sofort tiefe Empathie?' },
+  { id: 'a41', category: 'arts', topicEn: 'ANALOG SYNTHESIZER DESIGN', topicFr: 'SYNTHÉTISEURS ANALOGIQUES', topicDe: 'ANALOG-SYNTHESIZER BAU', vocab: [], promptEn: 'Why do musicians seek the imperfect warm drift of analog electronic circuits?', promptFr: 'Pourquoi les musiciens recherchent-ils la chaleur des circuits analogiques ?', promptDe: 'Warum suchen Musiker die unvollkommene Wärme analoger Schaltkreise?' },
+  { id: 'a42', category: 'arts', topicEn: 'CHAIR PROPORTION ANATOMY', topicFr: 'GÉOMÉTRIE DU SIÈGE', topicDe: 'STUHLDESIGN ANATOMIE', vocab: [], promptEn: 'Why is designing a comfortable chair considered the ultimate test of architecture?', promptFr: 'Pourquoi dessiner une chaise parfaite est-il le Graal des architectes ?', promptDe: 'Warum gilt der Entwurf eines perfekten Stuhls als Meisterprüfung?' },
+  { id: 'a43', category: 'arts', topicEn: 'ENGRAVED PRINTMAKING TECHNIQUES', topicFr: 'BURIN ET EAU-FORTE', topicDe: 'KUPFERSTICH RADIERUNG', vocab: [], promptEn: 'How does digging steel burins into copper plates achieve microscopic detail?', promptFr: 'Comment le burin sur plaque de cuivre permet-il une finesse microscopique ?', promptDe: 'Wie gelingen dem Kupferstecher mikroskopisch feine Linien im Metall?' },
+  { id: 'a44', category: 'arts', topicEn: 'MURAL TILES CERAMICS', topicFr: 'AZULEJOS ET FAÏENCES', topicDe: 'FLIESENKUNST AZULEJOS', vocab: [], promptEn: 'How did glazed cobalt blue tiles cool Mediterranean palace courtyards?', promptFr: 'Comment les faïences bleues ornent et tempèrent les patios du Sud ?', promptDe: 'Wie kühlten glasierte kobaltblaue Fliesen maurische Palasthöfe?' },
+  { id: 'a45', category: 'arts', topicEn: 'CARPET WEAVING KNOTS', topicFr: 'TISSAGE DES TAPIS', topicDe: 'TEPPICHKNÜPFEN KUNST', vocab: [], promptEn: 'What ancestral cosmic maps do nomadic wool carpet knots depict in wool?', promptFr: 'Quels symboles cosmiques les tapis noués main racontent-ils en laine ?', promptDe: 'Welche uralten Weltbilder erzählen die Knoten handgeknüpfter Teppiche?' },
+  { id: 'a46', category: 'arts', topicEn: 'URBAN CANOPY ARCHITECTURE', topicFr: 'AUVENTS ET VERRIÈRES', topicDe: 'GLASDACH ARCHITEKTUR', vocab: [], promptEn: 'How did 19th-century cast iron train glass roofs invent airy public spaces?', promptFr: 'Comment les verrières en fer des gares ont-elles créé la lumière urbaine ?', promptDe: 'Wie schufen die gusseisernen Glashallen der Bahnhöfe lichte Stadträume?' },
+  { id: 'a47', category: 'arts', topicEn: 'LACE MAKING BOBBIN', topicFr: 'DENTELLE AUX FUSEAUX', topicDe: 'KLÖPPELSPITZE HANDWERK', vocab: [], promptEn: 'How many months of nimble finger movements does a lace collar require?', promptFr: 'Combien d’heures de patience exige la dentelle aux fuseaux traditionnelle ?', promptDe: 'Wie viele Monate geduldiger Handarbeit stecken in feiner Klöppelspitze?' },
+  { id: 'a48', category: 'arts', topicEn: 'STREET CLOCK HOROLOGY', topicFr: 'HORLOGES MONUMENTALES', topicDe: 'TURMUHREN MECHANIK', vocab: [], promptEn: 'Why do mechanical pendulum church tower clocks still anchor neighborhood rhythm?', promptFr: 'Pourquoi les horloges de clocher rythment-elles encore la vie de village ?', promptDe: 'Warum takten mechanische Turmuhren bis heute den Rhythmus von Orten?' },
+  { id: 'a49', category: 'arts', topicEn: 'BLACKSMITH HAMMERED IRON', topicFr: 'FERRONNERIE D’ART', topicDe: 'KUNSTSCHMIEDE EISEN', vocab: [], promptEn: 'How does glowing red iron yield to anvil hammers to form floral balconies?', promptFr: 'Comment le fer forgé sur l’enclume devient-il arabesque et garde-corps ?', promptDe: 'Wie formt der Schmied auf dem Amboss glühendes Eisen zu Ziergittern?' },
+  { id: 'a50', category: 'arts', topicEn: 'TERRAZZO FLOORING CRAFT', topicFr: 'SOL EN TERRAZZO', topicDe: 'TERRAZZO BÖDEN KUNST', vocab: [], promptEn: 'How does embedding crushed marble chips into cement create eternal palace floors?', promptFr: 'Pourquoi les sols en marbre concassé traversent-ils les siècles sans ride ?', promptDe: 'Warum überdauern gegossene Terrazzoböden Jahrhunderte ohne Verschleiß?' },
+];
+
+// 50 Humanities & Social Sciences topics (h1 - h50)
+const HUMANITIES_TOPICS: TopicItem[] = [
+  {
+    id: 'h1',
+    category: 'humanities',
+    topicEn: 'URBAN LONELINESS FACTORS',
+    topicFr: 'SOLITUDE URBAINE',
+    topicDe: 'URBANE EINSAMKEIT',
+    vocab: [
+      { en: 'Alienation', fr: 'Aliénation', de: 'Entfremdung', pos: 'n', definitionEn: 'Feeling cut off from one’s community', definitionFr: 'Sentiment d’être étranger à son milieu', definitionDe: 'Gefühl der Isolierung von der Umwelt' },
+      { en: 'Transient', fr: 'Éphémère', de: 'Vergänglich', pos: 'adj', definitionEn: 'Lasting only for brief period', definitionFr: 'Qui ne dure qu’un court instant', definitionDe: 'Nur von kurzer Dauer' }
+    ],
+    promptEn: 'Why do residents of dense mega-cities report higher rates of social isolation than rural villagers?',
+    promptFr: 'Pourquoi les citadins des grandes métropoles se sentent-ils plus seuls que les ruraux ?',
+    promptDe: 'Warum fühlen sich Bewohner von Megastädten einsamer als Dorfbewohner?'
+  },
+  {
+    id: 'h2',
+    category: 'humanities',
+    topicEn: 'SOCIAL MEDIA POLARIZATION',
+    topicFr: 'POLARISATION EN LIGNE',
+    topicDe: 'POLARISIERUNG IM NETZ',
+    vocab: [
+      { en: 'Echo-chamber', fr: 'Chambre d’écho', de: 'Echokammer', pos: 'n', definitionEn: 'Setting where only agreeing voices sound', definitionFr: 'Espace où les idées préexistantes résonnent', definitionDe: 'Raum, in dem nur eigene Meinungen widerhallen' },
+      { en: 'Tribalism', fr: 'Tribalisme', de: 'Stammesdenken', pos: 'n', definitionEn: 'Aggressive loyalty to one’s cohort', definitionFr: 'Fidélité aveugle à son propre camp', definitionDe: 'Aggressives Beharren auf der eigenen Gruppe' }
+    ],
+    promptEn: 'Do engagement algorithms fundamentally destroy the common factual ground required for democracy?',
+    promptFr: 'Les algorithmes de viralité détruisent-ils les bases du débat démocratique ?',
+    promptDe: 'Zerstören Engagement-Algorithmen das gemeinsame Fundament der Demokratie?'
+  },
+  {
+    id: 'h3',
+    category: 'humanities',
+    topicEn: 'GENERATIONAL VALUE SHIFTS',
+    topicFr: 'CONFLITS DE GÉNÉRATIONS',
+    topicDe: 'GENERATIONENWANDEL WERTE',
+    vocab: [
+      { en: 'Tenure', fr: 'Fidélité à l’emploi', de: 'Dienstalter', pos: 'n', definitionEn: 'Long duration at single workplace', definitionFr: 'Longue présence dans une entreprise', definitionDe: 'Lange Verweildauer im selben Betrieb' },
+      { en: 'Well-being', fr: 'Bien-être', de: 'Wohlbefinden', pos: 'n', definitionEn: 'Mental and physical equilibrium', definitionFr: 'Équilibre psychologique et physique', definitionDe: 'Körperliches und seelisches Gleichgewicht' }
+    ],
+    promptEn: 'How has the cultural definition of professional career success transformed between generations?',
+    promptFr: 'Comment la définition de la réussite au travail a-t-elle changé en quarante ans ?',
+    promptDe: 'Wie hat sich der Begriff beruflicher Erfolg zwischen den Generationen gewandelt?'
+  },
+  {
+    id: 'h4',
+    category: 'humanities',
+    topicEn: 'GENDER WAGE PARITY',
+    topicFr: 'ÉGALITÉ SALARIALE HOMMES-FEMMES',
+    topicDe: 'ENTGELTGLEICHHEIT FRAUEN',
+    vocab: [
+      { en: 'Disparity', fr: 'Écart salarial', de: 'Lohnlücke', pos: 'n', definitionEn: 'Unfair difference between wages', definitionFr: 'Écart de rémunération injustifié', definitionDe: 'Ungerechtfertigte Gehaltsdifferenz' },
+      { en: 'Transparency', fr: 'Transparence', de: 'Transparenz', pos: 'n', definitionEn: 'Requirement to publish true pay figures', definitionFr: 'Obligation de révéler les salaires', definitionDe: 'Offenlegungspflicht bei Gehältern' }
+    ],
+    promptEn: 'Does mandatory publication of corporate salary brackets accelerate equal pay faster than lawsuits?',
+    promptFr: 'Rendre les grilles de salaire publiques est-il le meilleur moyen d’obtenir l’égalité ?',
+    promptDe: 'Beschleunigt die Veröffentlichung von Gehaltsbändern gleiche Bezahlung?'
+  },
+  {
+    id: 'h5',
+    category: 'humanities',
+    topicEn: 'AGING POPULATION ADAPTATIONS',
+    topicFr: 'VIEILLISSEMENT DÉMOGRAPHIQUE',
+    topicDe: 'ALTERNDE GESELLSCHAFT',
+    vocab: [
+      { en: 'Geriatric', fr: 'Gériatrique', de: 'Geriatrisch', pos: 'adj', definitionEn: 'Specialized healthcare for elders', definitionFr: 'Relatif aux soins des aînés', definitionDe: 'Die Altersmedizin betreffend' },
+      { en: 'Demographic', fr: 'Démographique', de: 'Demografisch', pos: 'adj', definitionEn: 'Concerning population age statistics', definitionFr: 'Relatif à la structure des populations', definitionDe: 'Die Bevölkerungsstruktur betreffend' }
+    ],
+    promptEn: 'How must town planners redesign transport and crosswalks as average citizen age passes fifty?',
+    promptFr: 'Comment adapter l’espace public quand l’âge moyen des citoyens dépasse 50 ans ?',
+    promptDe: 'Wie müssen Städte umgebaut werden, wenn der Altersdurchschnitt über 50 steigt?'
+  },
+  { id: 'h6', category: 'humanities', topicEn: 'CIVIL DISCOURSE RESTORATION', topicFr: 'DÉBAT CITOYEN APAISÉ', topicDe: 'ZIVILER DISKURS KULTUR', vocab: [], promptEn: 'Can structured town halls train citizens to argue passionately without hostility?', promptFr: 'Des assemblées citoyennes peuvent-elles réapprendre aux gens à dialoguer sans haine ?', promptDe: 'Können Bürgerforen lehren, leidenschaftlich ohne Hass zu streiten?' },
+  { id: 'h7', category: 'humanities', topicEn: 'MENTAL HEALTH DESTIGMATIZATION', topicFr: 'SANTÉ MENTALE TABOUS', topicDe: 'ENTSTIGMATISIERUNG THERAPIE', vocab: [], promptEn: 'Has talking openly about anxiety shifted public view from weakness to healthcare?', promptFr: 'Parler de thérapie a-t-il effacé la honte liée aux fragilités psychiques ?', promptDe: 'Hat offener Umgang mit Angstzuständen das Stigma psychischer Krankheiten gelöst?' },
+  { id: 'h8', category: 'humanities', topicEn: 'CLIMATE MIGRATION PRESSURES', topicFr: 'RÉFUGIÉS CLIMATIQUES', topicDe: 'KLIMA FLUCHT RECHTE', vocab: [], promptEn: 'Should global conventions establish legal refugee rights for sinking island residents?', promptFr: 'Le droit d’asile doit-il reconnaître ceux qui fuient la montée des océans ?', promptDe: 'Sollte das Völkerrecht den Status von Klimaflüchtlingen anerkennen?' },
+  { id: 'h9', category: 'humanities', topicEn: 'COLLECTIVE MEMORY PRESERVATION', topicFr: 'MÉMOIRE COLLECTIVE', topicDe: 'KOLLEKTIVES GEDÄCHTNIS', vocab: [], promptEn: 'How do national history archives negotiate between patriotic myths and dark historical truths?', promptFr: 'Comment concilier roman national et vérité historique douloureuse dans les musées ?', promptDe: 'Wie verhandeln Archive zwischen patriotischer Mythenbildung und dunklen Wahrheiten?' },
+  { id: 'h10', category: 'humanities', topicEn: 'DIGITAL PRIVACY RIGHTS', topicFr: 'DROIT À L’OUBLI', topicDe: 'DIGITALE PRIVATSPHÄRE', vocab: [], promptEn: 'Is genuine personal online anonymity still possible in an era of facial camera scraping?', promptFr: 'L’anonymat en ligne est-il encore possible face au fichage biométrique systématique ?', promptDe: 'Ist echte digitale Anonymität bei flächendeckender Gesichtserkennung noch möglich?' },
+  { id: 'h11', category: 'humanities', topicEn: 'WORKPLACE BURNOUT EPIDEMIC', topicFr: 'BURNOUT PROFESSIONNEL', topicDe: 'BURNOUT AM ARBEITSPLATZ', vocab: [], promptEn: 'Is chronic exhaustion an individual mental problem or an organizational failure of boundaries?', promptFr: 'Le burnout est-il une fragilité individuelle ou une dérive du management ?', promptDe: 'Ist Burnout ein individuelles Versagen oder ein struktureller Mangel an Grenzen?' },
+  { id: 'h12', category: 'humanities', topicEn: 'COMMUNITY TRUST EROSION', topicFr: 'DÉFIANCE CITOYENNE', topicDe: 'VERTRAUENSVERLUST INSTITUTIONEN', vocab: [], promptEn: 'Why have citizens lost faith in neutral scientific institutions and newspapers?', promptFr: 'Pourquoi la confiance envers la science et les médias s’est-elle effondrée ?', promptDe: 'Warum erodiert das Vertrauen in wissenschaftliche Institutionen und Medien?' },
+  { id: 'h13', category: 'humanities', topicEn: 'PRISON SYSTEM REHABILITATION', topicFr: 'RÉINSERTION PÉNITENTIAIRE', topicDe: 'STRAFVOLLZUG RESOZIALISIERUNG', vocab: [], promptEn: 'Does punitive isolation reduce recidivism more than vocational therapy behind bars?', promptFr: 'La prison punitive protège-t-elle mieux la société que la réinsertion active ?', promptDe: 'Senkt harte Bestrafung Rückfallquoten wirksamer als aktive Resozialisierung?' },
+  { id: 'h14', category: 'humanities', topicEn: 'FREE WILL PHILOSOPHY', topicFr: 'LE LIBRE ARBITRE', topicDe: 'FREIER WILLE DEBATTE', vocab: [], promptEn: 'Does neurological brain scan research disprove the classical philosophical concept of free will?', promptFr: 'Les neurosciences remettent-elles en cause l’existence du libre arbitre ?', promptDe: 'Widerlegen neurobiologische Gehirnscans die Existenz des freien Willens?' },
+  { id: 'h15', category: 'humanities', topicEn: 'FAST NEWS FATIGUE', topicFr: 'SATURATION INFORMATIONNELLE', topicDe: 'NACHRICHTENMÜDIGKEIT', vocab: [], promptEn: 'Are millions tuning out daily news broadcasts to protect their emotional stability?', promptFr: 'Éviter les actualités en continu protège-t-il la santé psychologique ?', promptDe: 'Meiden Millionen Menschen bewusst Nachrichten, um die eigene Psyche zu schützen?' },
+  { id: 'h16', category: 'humanities', topicEn: 'MERITOCRACY MYTH CRITIQUE', topicFr: 'MYTHE DE LA MÉRITOCRATIE', topicDe: 'MERITOKRATIE ILLUSION', vocab: [], promptEn: 'Does believing success is purely personal effort blind winners to luck and birth class?', promptFr: 'Croire en la méritocratie empêche-t-il de voir le rôle de la chance et de l’héritage ?', promptDe: 'Macht der Glaube an Meritokratie blind für Herkunftsprivilegien und Zufall?' },
+  { id: 'h17', category: 'humanities', topicEn: 'ALTRUISM EVOLUTIONARY ROOTS', topicFr: 'ORIGINES DE L’ALTRUISME', topicDe: 'EVOLUTION DES ALTRUISMUS', vocab: [], promptEn: 'Did human tribal survival depend more on selfless mutual sharing than violent conquest?', promptFr: 'La coopération désintéressée a-t-elle plus sauvé l’humanité que la guerre ?', promptDe: 'War selbstlose Hilfsbereitschaft für das Überleben wichtiger als kriegerischer Kampf?' },
+  { id: 'h18', category: 'humanities', topicEn: 'PARENTING INTENSIVE STYLES', topicFr: 'PARENTALITÉ INTENSIVE', topicDe: 'HELIKOPTER-ELTERN', vocab: [], promptEn: 'Does over-scheduling every weekend hour make children anxious and risk-averse?', promptFr: 'Planifier chaque minute des enfants les rend-il anxieux et dépendants ?', promptDe: 'Macht übermäßige elterliche Förderung Kinder ängstlich und unselbstständig?' },
+  { id: 'h19', category: 'humanities', topicEn: 'SECULARIZATION TRENDS', topicFr: 'SÉCULARISATION DES MŒURS', topicDe: 'SÄKULARISIERUNG TREND', vocab: [], promptEn: 'What replaces church communities as sources of neighborhood charity and ritual?', promptFr: 'Qu’est-ce qui remplace la paroisse pour créer du lien et du secours mutuel ?', promptDe: 'Welche Institutionen ersetzen Kirchengemeinden als Orte des Zusammenhalts?' },
+  { id: 'h20', category: 'humanities', topicEn: 'HISTORICAL TRUTH REVISION', topicFr: 'RÉVISION DE L’HISTOIRE', topicDe: 'HISTORISCHER REVISIONISMUS', vocab: [], promptEn: 'How should textbooks handle national founding figures who held enslaved peoples?', promptFr: 'Comment enseigner les figures historiques fondatrices ayant possédé des esclaves ?', promptDe: 'Wie sollten Geschichtsbücher mit Sklavenhaltern unter Nationalhelden umgehen?' },
+  { id: 'h21', category: 'humanities', topicEn: 'SOLITUDE VERSUS LONELINESS', topicFr: 'SOLITUDE CHOISIE', topicDe: 'ALLEINSEIN VERSUS EINSAMKEIT', vocab: [], promptEn: 'Why is intentional solitary quiet essential for creative writing and contemplation?', promptFr: 'Pourquoi la solitude choisie est-elle le terreau fertile de la création ?', promptDe: 'Warum ist bewusst gewähltes Alleinsein unverzichtbar für kreatives Schaffen?' },
+  { id: 'h22', category: 'humanities', topicEn: 'EMPATHY GAP IN WEALTH', topicFr: 'DÉFICIT D’EMPATHIE', topicDe: 'EMPATHIE-VERLUST DURCH REICHTUM', vocab: [], promptEn: 'Do psychological studies show high wealth reduces ability to read others’ facial distress?', promptFr: 'L’extrême richesse altère-t-elle la capacité à ressentir la détresse d’autrui ?', promptDe: 'Zeigen psychologische Studien, dass Reichtum die Empathiefähigkeit schwächt?' },
+  { id: 'h23', category: 'humanities', topicEn: 'COMMUNITY VOLUNTEERING DECLINE', topicFr: 'CRISE DU BÉNÉVOLAT', topicDe: 'EHRENAMT RÜCKGANG', vocab: [], promptEn: 'How can small sports clubs recruit coaches when parents work irregular shifts?', promptFr: 'Comment faire vivre les clubs sportifs face au manque d’entraîneurs bénévoles ?', promptDe: 'Wie können Sportvereine Trainer finden, wenn Eltern immer unregelmäßiger arbeiten?' },
+  { id: 'h24', category: 'humanities', topicEn: 'POLITICAL DYNASTY PERSISTENCE', topicFr: 'DYNASTIES POLITIQUES', topicDe: 'POLITISCHE DYNASTIEN', vocab: [], promptEn: 'Why do democratic voters still elect children and spouses of famous past presidents?', promptFr: 'Pourquoi les électeurs plébiscitent-ils encore les enfants d’anciens dirigeants ?', promptDe: 'Warum wählen Bürger in Demokratien oft Nachkommen früherer Staatschefs?' },
+  { id: 'h25', category: 'humanities', topicEn: 'RESTORATIVE JUSTICE CIRCLES', topicFr: 'JUSTICE RESTAURATIVE', topicDe: 'TÄTER-OPFER-AUSGLEICH', vocab: [], promptEn: 'Can mediated face-to-face meetings between victims and burglars heal trauma?', promptFr: 'La rencontre en face-à-face entre victime et agresseur répare-t-elle le traumatisme ?', promptDe: 'Können begleitete Gespräche zwischen Täter und Opfer Traumata lindern?' },
+  { id: 'h26', category: 'humanities', topicEn: 'URBAN GENTRIFICATION IMPACT', topicFr: 'GENTRIFICATION URBAINE', topicDe: 'GENTRIFIZIERUNG FOLGEN', vocab: [], promptEn: 'Does neighborhood renovation inevitably push out low-income legacy bakers and tailors?', promptFr: 'La rénovation des quartiers branchés chasse-t-elle inévitablement les petits commerces ?', promptDe: 'Verdrängt die Aufwertung von Szenevierteln alteingesessene Nachbarn?' },
+  { id: 'h27', category: 'humanities', topicEn: 'DIGITAL DETOX MOVEMENT', topicFr: 'DÉCONNEXION NUMÉRIQUE', topicDe: 'DIGITAL DETOX BEWEGUNG', vocab: [], promptEn: 'Can a seven-day screen fast permanently restore deep concentration for books?', promptFr: 'Une semaine sans smartphone permet-elle de réapprendre la lecture approfondie ?', promptDe: 'Kann eine bildschirmfreie Woche die Fähigkeit zu tiefer Konzentration erneuern?' },
+  { id: 'h28', category: 'humanities', topicEn: 'NEURODIVERSITY WORK ADVANTAGES', topicFr: 'NEURODIVERSITÉ AU TRAVAIL', topicDe: 'NEURODIVERSITÄT VORTEILE', vocab: [], promptEn: 'How do autistic pattern recognition strengths unlock breakthrough software auditing?', promptFr: 'En quoi les profils autistes excellent-ils dans l’audit de code informatique ?', promptDe: 'Wie bereichern autistische Mustererkennungs-Fähigkeiten die Softwareanalyse?' },
+  { id: 'h29', category: 'humanities', topicEn: 'EPIDEMIC OF INDECISION', topicFr: 'FATIGUE DÉCISIONNELLE', topicDe: 'ENTSCHEIDUNGSMÜDIGKEIT', vocab: [], promptEn: 'Does having two hundred streaming movies to choose from ruin weekend relaxation?', promptFr: 'Avoir trop de choix sur les plateformes gâche-t-il le plaisir du spectateur ?', promptDe: 'Verdirbt das Überangebot von 200 Filmen auf Abruf den Feierabend?' },
+  { id: 'h30', category: 'humanities', topicEn: 'HUMAN ANIMAL BONDS', topicFr: 'LIEN HOMME-ANIMAL', topicDe: 'MENSCH-TIER BEZIEHUNG', vocab: [], promptEn: 'Why do therapy dogs produce immediate measured drops in hospital blood pressure?', promptFr: 'Pourquoi la présence d’un chien d’assistance apaise-t-elle les malades à l’hôpital ?', promptDe: 'Warum senken Therapiehunde messbar den Blutdruck bei Patienten?' },
+  { id: 'h31', category: 'humanities', topicEn: 'HEROIC WHISTLEBLOWER ETHICS', topicFr: 'LANCEURS D’ALERTE', topicDe: 'WHISTLEBLOWER SCHUTZ', vocab: [], promptEn: 'Should leaking classified state surveillance programs be punished or awarded medals?', promptFr: 'Les lanceurs d’alerte révélant des écoutes illégales doivent-ils être décorés ?', promptDe: 'Verdienen Whistleblower, die Überwachung aufdecken, Medaillen statt Strafen?' },
+  { id: 'h32', category: 'humanities', topicEn: 'RURAL DEPONENTIZATION CRISIS', topicFr: 'DÉSERTIFICATION RURALE', topicDe: 'LANDFLUCHT PROBLEM', vocab: [], promptEn: 'How can mountain villages survive when the last post office and pharmacy close?', promptFr: 'Comment maintenir la vie rurale quand les commerces et pharmacies ferment ?', promptDe: 'Wie überleben Dörfer, wenn Post und Arztpraxis schließen?' },
+  { id: 'h33', category: 'humanities', topicEn: 'DEATH POSITIVITY MOVEMENT', topicFr: 'TABOU DE LA MORT', topicDe: 'DEATH-POSITIVE BEWEGUNG', vocab: [], promptEn: 'Does candidly discussing end-of-life wishes dispel grief anxiety among families?', promptFr: 'Parler sereinement de la fin de vie apaise-t-il l’angoisse des proches ?', promptDe: 'Nimmt offenes Sprechen über das Lebensende Familien die Angst vor dem Tod?' },
+  { id: 'h34', category: 'humanities', topicEn: 'MINDFULNESS IN PRISONS', topicFr: 'MÉDITATION EN PRISON', topicDe: 'MEDITATION IM GEFÄNGNIS', vocab: [], promptEn: 'Can teaching breathing meditation to violent inmates reduce yard assaults?', promptFr: 'Enseigner la respiration consciente aux détenus réduit-il les agressions ?', promptDe: 'Kann Atemmeditation gewalttätige Übergriffe im Vollzug nachweisbar senken?' },
+  { id: 'h35', category: 'humanities', topicEn: 'SOCIOLINGUISTIC ACCENT BIAS', topicFr: 'DISCRIMINATION PAR L’ACCENT', topicDe: 'DIALEKT DISKRIMINIERUNG', vocab: [], promptEn: 'Do regional working-class accents unconsciously hurt candidates in job interviews?', promptFr: 'L’accent populaire pénalise-t-il encore les candidats à l’embauche ?', promptDe: 'Werden Bewerber mit regionalem Akzent im Vorstellungsgespräch benachteiligt?' },
+  { id: 'h36', category: 'humanities', topicEn: 'GIFT ECONOMY COOPERATION', topicFr: 'ÉCONOMIE DU DON', topicDe: 'SCHENKÖKONOMIE MODELL', vocab: [], promptEn: 'How do tool-sharing libraries demonstrate alternatives to private ownership?', promptFr: 'Les bricothèques partagées prouvent-elles que l’usage surpasse la propriété ?', promptDe: 'Beweisen Leihläden für Werkzeug, dass Teilen besser als Besitzen ist?' },
+  { id: 'h37', category: 'humanities', topicEn: 'POST TRUTH POLITICS', topicFr: 'ÈRE DE LA POST-VÉRITÉ', topicDe: 'POSTFAKTISCHE POLITIK', vocab: [], promptEn: 'Why do emotional appeals sway voting decisions more than verified statistical charts?', promptFr: 'Pourquoi les émotions l’emportent-elles sur les faits chiffrés en politique ?', promptDe: 'Warum wiegen emotionale Parolen bei Wahlen oft schwerer als Statistiken?' },
+  { id: 'h38', category: 'humanities', topicEn: 'PHILOSOPHY OF HAPPINESS', topicFr: 'PHILOSOPHIE DU BONHEUR', topicDe: 'GLÜCKSPHILOSOPHIE FORSCHUNG', vocab: [], promptEn: 'Did ancient Stoic acceptance of suffering anticipate modern cognitive psychotherapy?', promptFr: 'Le stoïcisme antique préfigurait-il les thérapies comportementales actuelles ?', promptDe: 'Hat die antike Stoa moderne kognitive Verhaltenstherapie vorweggenommen?' },
+  { id: 'h39', category: 'humanities', topicEn: 'CIVIL DISOBEDIENCE TRADITION', topicFr: 'DÉSOBÉISSANCE CIVILE', topicDe: 'ZIVILER UNGEHORSAM', vocab: [], promptEn: 'At what point is peaceful lawbreaking morally justified to protect the biosphere?', promptFr: 'Quand la désobéissance pacifique devient-elle un impératif pour le climat ?', promptDe: 'Wann ist friedlicher Gesetzesbruch zum Schutz des Klimas moralisch legitim?' },
+  { id: 'h40', category: 'humanities', topicEn: 'SPORTS TRIBAL IDENTITY', topicFr: 'FERVEUR DU FOOTBALL', topicDe: 'FUSSBALL-FAN KULTUR', vocab: [], promptEn: 'Why does local football club loyalty create profound cross-class community solidarity?', promptFr: 'Pourquoi l’amour d’un club de foot soude-t-il des milieux sociaux opposés ?', promptDe: 'Warum stiftet die Treue zum Fußballverein Solidarität über Klassengrenzen?' },
+  { id: 'h41', category: 'humanities', topicEn: 'COMMUNITY GARDEN PSYCHOLOGY', topicFr: 'JARDINS PARTAGÉS', topicDe: 'GEMEINSCHAFTSGÄRTEN', vocab: [], promptEn: 'Does digging soil alongside neighbors build cross-cultural empathy faster than talks?', promptFr: 'Cultiver ensemble un potager rapproche-t-il plus que de longs discours ?', promptDe: 'Baut gemeinsames Gärtnern schneller Vorurteile ab als Diskussionsrunden?' },
+  { id: 'h42', category: 'humanities', topicEn: 'ETHICS OF ZOOS', topicFr: 'ÉTHIQUE DES PARCS ZOOLOGIQUES', topicDe: 'ZOO HALTUNG ETHIK', vocab: [], promptEn: 'Does displaying caged wild animals educate youth or normalize wildlife subjugation?', promptFr: 'Les zoos sensibilisent-ils à la nature ou légitiment-ils l’enfermement ?', promptDe: 'Dienen Zoos dem Artenschutz oder gewöhnen sie an die Gefangenschaft von Tieren?' },
+  { id: 'h43', category: 'humanities', topicEn: 'CHRONIC PAIN PSYCHOLOGY', topicFr: 'DOULEURS CHRONIQUES', topicDe: 'CHRONISCHER SCHMERZ PSYCHE', vocab: [], promptEn: 'How does psychological catastrophizing amplify neurological pain signals?', promptFr: 'Comment l’anxiété et le stress décuplent-ils les douleurs physiques chroniques ?', promptDe: 'Wie verstärken Angst und seelische Anspannung chronische Schmerzsignale?' },
+  { id: 'h44', category: 'humanities', topicEn: 'COGNITIVE BIAS BLINDSPOTS', topicFr: 'BIAIS COGNITIFS', topicDe: 'KOGNITIVE VERZERRUNGEN', vocab: [], promptEn: 'Why do intelligent academics believe they are uniquely immune to confirmation bias?', promptFr: 'Pourquoi les esprits brillants se croient-ils à tort immunisés contre les biais ?', promptDe: 'Warum glauben kluge Köpfe fälschlicherweise, immun gegen Vorurteile zu sein?' },
+  { id: 'h45', category: 'humanities', topicEn: 'PARENTAL BURNOUT PRESSURES', topicFr: 'BURNOUT PARENTAL', topicDe: 'ELTERN BURNOUT DRUCK', vocab: [], promptEn: 'Why are modern parents experiencing unprecedented anxiety about perfectionism?', promptFr: 'Pourquoi les parents d’aujourd’hui souffrent-ils tant du mythe de la perfection ?', promptDe: 'Warum leiden moderne Eltern unter beispiellosem Perfektionsdruck?' },
+  { id: 'h46', category: 'humanities', topicEn: 'PUBLIC APOLOGY SINCERITY', topicFr: 'EXCUSES PUBLIQUES', topicDe: 'ÖFFENTLICHE ENTSCHULDIGUNGEN', vocab: [], promptEn: 'Can corporate PR crisis apologies heal community harm without tangible restitution?', promptFr: 'Les excuses publiques des multinationales sont-elles de la simple com’ ?', promptDe: 'Können PR-Entschuldigungen Schaden gutmachen ohne finanzielle Entschädigung?' },
+  { id: 'h47', category: 'humanities', topicEn: 'SOLITARY RETIREMENT HOMES', topicFr: 'MAISONS DE RETRAITE', topicDe: 'ALTENHEIME ISOLATION', vocab: [], promptEn: 'Should elderly residences be co-located with nursery daycares to bridge generations?', promptFr: 'Faut-il réunir crèches et maisons de retraite pour rompre l’isolement des aînés ?', promptDe: 'Sollten Kitas und Seniorenheime unter einem Dach Generationen verbinden?' },
+  { id: 'h48', category: 'humanities', topicEn: 'REVENGE VERSUS JUSTICE', topicFr: 'JUSTICE OU VENGEANCE', topicDe: 'RACHE ODER GERECHTIGKEIT', vocab: [], promptEn: 'How did modern legal constitutions deliberately separate judicial law from revenge?', promptFr: 'Comment le droit pénal s’est-il émancipé de la pulsion de vengeance ?', promptDe: 'Wie grenzt der moderne Rechtsstaat gerechte Strafe von Rachegelüsten ab?' },
+  { id: 'h49', category: 'humanities', topicEn: 'FAME CELEBRITY PARADOX', topicFr: 'PARADOXE DE LA CÉLÉBRITÉ', topicDe: 'PROMINENZ PARADOXON', vocab: [], promptEn: 'Why do viral internet celebrities report soaring levels of depression and paranoia?', promptFr: 'Pourquoi la célébrité instantanée sur TikTok engendre-t-elle tant de dépression ?', promptDe: 'Warum leiden virale Internet-Stars unter extremer Einsamkeit und Paranoia?' },
+  { id: 'h50', category: 'humanities', topicEn: 'COMMUNITY REPAIR CAFES', topicFr: 'RÉPAR’CAFÉS CITOYENS', topicDe: 'REPAIR-CAFE BEWEGUNG', vocab: [], promptEn: 'How does fixing a neighbor’s broken toaster together rebuild civic fellowship?', promptFr: 'Réparer un grille-pain ensemble dans un atelier recrée-t-il la citoyenneté ?', promptDe: 'Wie stiftet das gemeinsame Reparieren von Toastern Nachbarschaftshilfe?' },
+];
+
+export const ALL_TOPICS: TopicItem[] = [
+  ...CULTURE_TOPICS,
+  ...EDUCATION_TOPICS,
+  ...ECONOMY_TOPICS,
+  ...TECH_TOPICS,
+  ...ARTS_TOPICS,
+  ...HUMANITIES_TOPICS,
+];
+
+// Helper to get random topic
+export const getRandomTopic = (
+  category: CategoryId = 'all',
+  currentId?: string
+): TopicItem => {
+  const filtered = category === 'all'
+    ? ALL_TOPICS
+    : ALL_TOPICS.filter((t) => t.category === category);
+
+  const candidatePool = filtered.filter((t) => t.id !== currentId);
+  const pool = candidatePool.length > 0 ? candidatePool : filtered;
+  const randomIndex = Math.floor(Math.random() * pool.length);
+  return pool[randomIndex];
+};
+
+// Count by category helper
+export const getCategoryCount = (category: CategoryId): number => {
+  if (category === 'all') return ALL_TOPICS.length;
+  return ALL_TOPICS.filter((t) => t.category === category).length;
+};
