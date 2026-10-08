@@ -39,7 +39,6 @@ export default function App() {
   };
 
   const displayTitle = getActiveTitle(currentTopic, appLang);
-  const wordCount = countWords(displayTitle);
 
   // Copy topic to clipboard
   const handleCopy = () => {
@@ -81,12 +80,8 @@ export default function App() {
     <div className="min-h-screen w-full bg-white text-neutral-900 flex flex-col justify-between selection:bg-neutral-900 selection:text-white relative overflow-x-hidden font-sans">
       {/* ================= TOP BAR (BORDERLESS, STREAMLINED ACCORDION NEXT TO LANGUAGE SELECTOR) ================= */}
       <header className="w-full px-6 py-4 flex items-center justify-between gap-4 z-10">
-        {/* Left: Minimalist brand indicator */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
-            Topic Generator
-          </span>
-        </div>
+        {/* Left spacer: keeps top-bar controls neatly aligned to the right without redundant text */}
+        <div />
 
         {/* Right: Grouped Category Accordion Dropdown NEXT TO Language Selector + Lucide Action Buttons */}
         <div className="flex items-center gap-2">
@@ -176,9 +171,6 @@ export default function App() {
           <h1 className="font-generator-title text-3xl sm:text-5xl md:text-6xl text-neutral-950 uppercase tracking-[0.24em] transition-all duration-300">
             {t.appTitle}
           </h1>
-          <p className="mt-3 text-xs tracking-widest text-neutral-400 uppercase font-light">
-            {t.appSubtitle}
-          </p>
         </div>
 
         {/* Center Display: "TOPIC NAME" */}
@@ -192,26 +184,10 @@ export default function App() {
               transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
               className="flex flex-col items-center"
             >
-              {/* Category & Word count metadata (no pill, clean typographic separator) */}
-              <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-neutral-400 font-medium mb-3">
-                <span>{(t as any)[currentTopic.category] || currentTopic.category}</span>
-                <span aria-hidden="true">·</span>
-                <span className="text-neutral-500 font-mono text-[11px] lowercase">
-                  {t.wordsCount(wordCount)}
-                </span>
-              </div>
-
               {/* Central topic headline: clean uppercase tracking */}
               <h2 className="font-topic-display text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-normal text-neutral-900 uppercase tracking-[0.18em] leading-snug text-balance">
                 {displayTitle}
               </h2>
-
-              {/* Secondary English reference when in French or German */}
-              {appLang !== 'en' && (
-                <p className="mt-2 text-xs md:text-sm text-neutral-400 font-light tracking-wide">
-                  EN: {currentTopic.topicEn}
-                </p>
-              )}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -251,10 +227,6 @@ export default function App() {
             C
           </kbd>
           <span>Copy</span>
-        </div>
-
-        <div className="text-neutral-400">
-          {t.footerTagline}
         </div>
       </footer>
     </div>

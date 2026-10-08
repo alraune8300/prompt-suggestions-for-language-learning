@@ -79,7 +79,7 @@ export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
         <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
           <div className="px-3.5 py-2 text-[11px] font-semibold tracking-wider uppercase text-neutral-400 flex items-center justify-between bg-neutral-50/50 rounded-t-xl">
             <span>{t.selectDomain}</span>
-            <span className="text-neutral-400 font-mono text-[10px]">300 topics</span>
+            <span className="text-neutral-400 font-mono text-[10px]">{getCategoryCount('all')} topics</span>
           </div>
 
           <div className="max-h-72 overflow-y-auto py-1">
