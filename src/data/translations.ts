@@ -12,6 +12,9 @@ export interface UiTranslations {
   technology: string;
   arts: string;
   humanities: string;
+  media: string;
+  global: string;
+  politics: string;
   wordsCount: (count: number) => string;
   copy: string;
   copied: string;
@@ -33,6 +36,9 @@ export const UI_TRANSLATIONS: Record<AppLanguage, UiTranslations> = {
     technology: 'Modern Technology',
     arts: 'Arts & Design',
     humanities: 'Social Sciences & Humanities',
+    media: 'Media, Journalism & Society',
+    global: 'International Relations & Global Issues',
+    politics: 'Politics & Trends',
     wordsCount: (c) => `${c} ${c === 1 ? 'word' : 'words'}`,
     copy: 'Copy Topic',
     copied: 'Copied!',
@@ -52,6 +58,9 @@ export const UI_TRANSLATIONS: Record<AppLanguage, UiTranslations> = {
     technology: 'Technologies modernes',
     arts: 'Arts & Design',
     humanities: 'Sciences humaines & sociales',
+    media: 'Médias, Presse & Société',
+    global: 'Relations internationales & Monde',
+    politics: 'Politique & Tendances',
     wordsCount: (c) => `${c} ${c === 1 ? 'mot' : 'mots'}`,
     copy: 'Copier le sujet',
     copied: 'Copié !',
@@ -71,6 +80,9 @@ export const UI_TRANSLATIONS: Record<AppLanguage, UiTranslations> = {
     technology: 'Moderne Technologie',
     arts: 'Kunst & Design',
     humanities: 'Geistes- & Sozialwissenschaften',
+    media: 'Medien, Presse & Gesellschaft',
+    global: 'Internationale Beziehungen & Weltpolitik',
+    politics: 'Politik & Trends',
     wordsCount: (c) => `${c} ${c === 1 ? 'Wort' : 'Wörter'}`,
     copy: 'Thema kopieren',
     copied: 'Kopiert!',
